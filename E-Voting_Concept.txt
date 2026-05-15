@@ -1,0 +1,129 @@
+
+combine --> Pallier + BLockchain + Bulletin Board + Digital Signature
+
+ --> name : Blockchian-based Secure E-voting with homomorphic encryption
+
+
+Concept
+
+Use Blockchain to:
+	- immutable storage
+	- transparency
+	- audit
+
+Use Paillier to:
+	- privacy-preserving tally
+	- encrypted voting
+
+Use Digital Signature to:
+	- verification voter
+	- against fake vote
+
+------ SYSTEM ARCHITECTURE----
+
++-------------------+
+|    Voter Client   |
+|  (Web / GUI App)  |
++-------------------+
+         |
+         | 1. Login + Verify
+         v
++-------------------+
+| Authentication    |
+| Server            |
++-------------------+
+         |
+         | 2. Encrypt vote
+         v
++-------------------+
+| Paillier Encrypt  |
++-------------------+
+         |
+         | 3. Sign Ballot
+         v
++-------------------+
+| Digital Signature |
+| RSA / ECDSA       |
++-------------------+
+         |
+         | 4. Submit Vote
+         v
++-------------------+
+| Blockchain Smart  |
+| Contract          |
++-------------------+
+         |
+         | 5. Store Ciphertext
+         v
++-------------------+
+| Bulletin Board    |
++-------------------+
+         |
+         | 6. Aggregate
+         v
++-------------------+
+| Homomorphic Tally |
+| Server            |
++-------------------+
+         |
+         | 7. Decrypt Final
+         v
++-------------------+
+| Election Authority|
++-------------------+
+
+
+----Process
+Step 1 - Election setup
+Authority :
+	- generate Paillier keypair
+	- publish public key
+	- keep private kety secret
+
+Step 2 - Voter Authentication
+User:
+	- login
+	- verify ID
+	- OTP/email
+--> Only vote 1 time
+
+
+Step 3 - Encrypt Vote
+ex:
+Candidate A -> 1
+Candidate B ->2
+
+
+Step 4 - Sign Ballot
+
+Vote use:
+	- private signing key
+
+--> signature = Sign(ciphertext)
+
+	--> Against:
+		- fake ballot
+		- modified ballot
+
+Step 5 - Submit to Blockchain
+
+Smart contract save:
+	- ciphertext
+	- signature
+	- timestamp	
+	- vote receipt
+
+Step 6 - Bulletin Board
+Public can:
+	- verify vote exists
+	- audit election
+
+But:
+	- no one know who was voted
+
+Step 7 - Homomorphic tally
+Server take ciphertext from blockchain --> calculate formula
+
+Step 8 - Final Decryption
+Authority decode
+	--> Total ballot
