@@ -1,0 +1,40 @@
+{
+  "name": "blockchain-voting",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "start": "next dev",
+    "build": "next build"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "js-cookie": "^3.0.7",
+    "mongoose": "^8.5.1",
+    "next": "12.3.4",
+    "nodemailer": "^6.9.14",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "semantic-ui-css": "^2.5.0",
+    "semantic-ui-react": "^2.1.5",
+    "web3": "^4.9.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "A blockchain-based E-voting system, created for the final year project of my college, with the help of my Project partners, Sayyam Gada and Charmee Mehta.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mehtaAnsh/BlockChainVoting-Private.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mehtaAnsh/BlockChainVoting-Private/issues"
+  },
+  "homepage": "https://github.com/mehtaAnsh/BlockChainVoting-Private#readme",
+  "devDependencies": {
+    "hardhat": "^3.5.0"
+  }
+}
