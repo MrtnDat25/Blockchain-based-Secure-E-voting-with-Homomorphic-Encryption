@@ -4,6 +4,9 @@ combine --> Pallier + BLockchain + Bulletin Board + Digital Signature
  --> name : Blockchian-based Secure E-voting with homomorphic encryption
 
 
+
+ARCHITECTURE : Next 14 + next/router + Sepolia + MetaMask + Hardhat
+
 Concept
 
 Use Blockchain to:
