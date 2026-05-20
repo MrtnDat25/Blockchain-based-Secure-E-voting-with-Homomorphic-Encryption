@@ -1,6 +1,6 @@
 const next = require('next');
 const express = require('express');
-const voter = require('./routes/voter');
+// const voter = require('./routes/voter');
 const company = require('./routes/company');
 const candidate = require('./routes/candidate');
 const bodyParser = require('body-parser');

@@ -62,34 +62,54 @@ class DividerExampleVerticalForm extends Component {
 	http.send(params); 
 	}
   }
-  signin =  async event => {
-      const email = document.getElementById('signin_email').value;
-      this.setState({email: document.getElementById('signin_email').value});
-      const password = document.getElementById("signin_password").value;
-      var http = new XMLHttpRequest();
-      var url = "company/authenticate";
-      var params = "email=" + email + "&password=" + password;
-      http.open("POST", url, true);
-      //Send the proper header information along with the request
-      http.setRequestHeader(
-        "Content-type",
-        "application/x-www-form-urlencoded"
-      );
-      http.onreadystatechange = function() {
-        //Call a function when the state changes.
-        if (http.readyState == 4 && http.status == 200) {
-		  var responseObj = JSON.parse(http.responseText);
-		  if(responseObj.status=="success") {
-            Cookies.set('company_id', encodeURI(responseObj.data.id));
-            Cookies.set('company_email', encodeURI(responseObj.data.email)); 
-		  }
-		  else {
-			alert(responseObj.message);
-		  }
-          
+signin = async event => {
+  event.preventDefault();
+
+  const email = document.getElementById('signin_email').value;
+  const password = document.getElementById('signin_password').value;
+
+  this.setState({ email });
+
+  var http = new XMLHttpRequest();
+  var url = "company/authenticate";
+  var params = "email=" + email + "&password=" + password;
+
+  http.open("POST", url, true);
+  http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+  http.onreadystatechange = async function () {
+    if (http.readyState == 4 && http.status == 200) {
+      const responseObj = JSON.parse(http.responseText);
+
+      if (responseObj.status == "success") {
+        Cookies.set('company_id', encodeURI(responseObj.data.id));
+        Cookies.set('company_email', encodeURI(responseObj.data.email));
+
+        try {
+          const accounts = await web3.eth.getAccounts();
+
+          const summary = await Election_Factory.methods
+            .getDeployedElection(email)
+            .call({ from: accounts[0] });
+
+          if (summary[2] == "Create an election.") {
+            Router.push('/election/create_election');
+          } else {
+            Cookies.set('address', summary[0]);
+            Router.push(`/election/${summary[0]}/company_dashboard`);
+          }
+
+        } catch (err) {
+          console.log("web3 error:", err.message);
         }
-      };
-      http.send(params); 
+
+      } else {
+        alert(responseObj.message);
+      }
+    }
+  };
+
+  http.send(params);
       try {
         const accounts = await web3.eth.getAccounts();
         const summary = await Election_Factory.methods.getDeployedElection(this.state.email).call({from: accounts[0]});
@@ -101,9 +121,9 @@ class DividerExampleVerticalForm extends Component {
             Router.push(`/election/${summary[0]}/company_dashboard`);
         }
     }
-    catch (err) {
-        console.log(err.Message);
-    }
+      catch (err) {
+        console.log(err.message);
+      }
   }
 
   render() {
