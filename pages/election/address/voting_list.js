@@ -1,13 +1,15 @@
 import React, { Component } from 'react';
 import { Grid, Header, Button, Form, Input, Icon, Menu, Modal, Sidebar, Container, Card } from 'semantic-ui-react';
-import Layout from '../../components/Layout';
+import Layout from '../../../components/Layout';
 import Cookies from 'js-cookie';
-import {Link,Router} from '../../routes';
-import Election from '../../Ethereum/election';
-import {Helmet} from 'react-helmet';
+import Link from 'next/link'
+import Head from 'next/head';
+import Election from '../../../Ethereum/election';
+
 class VotingList extends Component { 
 
     state = {
+        loading : false,
         election_address: Cookies.get('address'),
         election_name: '',
         election_description: '',
@@ -170,7 +172,7 @@ class VotingList extends Component {
         <Menu.Item as='a' style={{ color: 'grey' }} >
         <h2>MENU</h2><hr/>
         </Menu.Item>      
-        <Link route={`/election/${Cookies.get('address')}/company_dashboard`}>
+        <Link href={`/election/company_dashboard`}>
         <a>
           <Menu.Item style={{ color: 'grey', fontColor: 'grey' }}>
             <Icon name='dashboard'/>
@@ -178,7 +180,7 @@ class VotingList extends Component {
           </Menu.Item>
           </a>
           </Link>
-          <Link route={`/election/${Cookies.get('address')}/candidate_list`}>
+          <Link href={`/election/candidate_list`}>
           <a>
           <Menu.Item as='a' style={{ color: 'grey' }}>
             <Icon name='user outline' />
@@ -186,7 +188,7 @@ class VotingList extends Component {
           </Menu.Item>
           </a>
           </Link>
-          <Link route={`/election/${Cookies.get('address')}/voting_list`}>
+          <Link href={`/election/${Cookies.get('address')}/voting_list`}>
           <a>
           <Menu.Item as='a' style={{ color: 'grey' }}>
             <Icon name='list' />
@@ -209,47 +211,61 @@ class VotingList extends Component {
         Cookies.remove('company_email');
         Cookies.remove('company_id');
         alert("Logging out.");
-        import { useRouter } from 'next/router'
 
-const router = useRouter()
-router.push('/homepage');
+Router.push('/homepage');
     }
 
-    register = event => {
+   register = (event) => {
+  event.preventDefault();
 
-		const email = document.getElementById('register_voter_email').value;
-    
-		var http = new XMLHttpRequest();
-        var url = "/voter/register";
-        var params = "email=" + email+"&election_address=" + this.state.election_address+ "&election_name=" + this.state.election_name + "&election_description=" + this.state.election_description;
-        http.open("POST", url, true);
-        //Send the proper header information along with the request
-        http.setRequestHeader(
-            "Content-type",
-            "application/x-www-form-urlencoded"
-        );
-        http.onreadystatechange = function() {
-            //Call a function when the state changes.
-            if (http.readyState == 4 && http.status == 200) {
-                var responseObj = JSON.parse(http.responseText);
-                if(responseObj.status=="success") {
-                  alert(responseObj.message);                  
-                }
-                else {
-                  alert(responseObj.message);
-                }
-            }
-        };
-    	http.send(params);
-	}
+  this.setState({ loading: true });
+
+  const email = document.getElementById('register_voter_email').value;
+
+  const http = new XMLHttpRequest();
+  const url = "/voter/register";
+
+  const params =
+    "email=" +
+    email +
+    "&election_address=" +
+    this.state.election_address +
+    "&election_name=" +
+    this.state.election_name +
+    "&election_description=" +
+    this.state.election_description;
+
+  http.open("POST", url, true);
+
+  http.setRequestHeader(
+    "Content-type",
+    "application/x-www-form-urlencoded"
+  );
+
+  http.onreadystatechange = () => {
+    if (http.readyState === 4) {
+      this.setState({ loading: false });
+
+      if (http.status === 200) {
+        const responseObj = JSON.parse(http.responseText);
+
+        alert(responseObj.message);
+      } else {
+        alert("Request failed");
+      }
+    }
+  };
+
+  http.send(params);
+};
 	
   render() {      
     return (
       <div>
-          <Helmet>
+          <Head>
             <title>Voting list</title>
             <link rel="shortcut icon" type="image/x-icon" href="../../public/logo3.png" />
-          </Helmet>
+          </Head>
         <Grid>
           <Grid.Row>
             <Grid.Column width={2}>
@@ -287,7 +303,13 @@ router.push('/homepage');
                         />
 
                         <br /><br />
-                        <Button primary style={{ Bottom: '10px', marginBottom: '15px' }} onClick={this.register}>Register</Button>
+                        <Button
+                          primary
+                          loading={this.state.loading}
+                          onClick={this.register}
+                        >
+                          Register
+                        </Button>
                       </Form.Group>
                     </Card>
                   </Container>

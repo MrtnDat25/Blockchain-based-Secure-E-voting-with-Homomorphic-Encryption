@@ -12,6 +12,8 @@ import Router from "next/router";
 import web3 from "../Ethereum/web3";
 import Election_Factory from "../Ethereum/election_factory";
 import Head from "next/head";
+import Cookies from "js-cookie";
+
 
 class DividerExampleVerticalForm extends Component {
   state = { visible: true, email: "" };
@@ -63,35 +65,53 @@ class DividerExampleVerticalForm extends Component {
     }
   };
 
-  // 🔥 SIGNIN = READ FROM BLOCKCHAIN
-  signin = async () => {
-    try {
-      const email = document.getElementById("signin_email").value;
+signin = async () => {
+  try {
+    const email = document.getElementById("signin_email").value;
 
-      this.setState({ email });
+    await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
 
-      await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
+    const accounts = await web3.eth.getAccounts();
 
-      const accounts = await web3.eth.getAccounts();
+    const summary = await Election_Factory.methods
+      .getDeployedElection(email)
+      .call({ from: accounts[0] });
 
-      const summary = await Election_Factory.methods
-        .getDeployedElection(email)
-        .call({ from: accounts[0] });
+    console.log("SUMMARY:", summary);
 
-      console.log("SUMMARY:", summary);
-
-      if (summary[2] === "Create an election.") {
-        Router.push("/election/create_election");
-      } else {
-        Router.push(`/election/${summary[0]}/company_dashboard`);
-      }
-    } catch (err) {
-      console.log(err);
-      alert("Signin failed");
+    // CHECK NULL
+    if (!summary || summary.length === 0) {
+      alert("Election not found");
+      return;
     }
-  };
+
+    // SAVE COOKIE
+    Cookies.set("address", summary[0], {
+      expires: 7,
+      path: "/",
+    });
+
+    Cookies.set("company_email", email, {
+      expires: 7,
+      path: "/",
+    });
+
+    console.log("COOKIE SAVED:", summary[0]);
+
+    // REDIRECT
+    setTimeout(() => {
+      Router.push(
+        `/election/company_dashboard`
+      );
+    }, 300);
+
+  } catch (err) {
+    console.log(err);
+    alert(err.message);
+  }
+};
 
   render() {
     const { visible } = this.state;

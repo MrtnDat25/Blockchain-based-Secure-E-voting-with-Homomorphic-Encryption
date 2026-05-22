@@ -1,12 +1,13 @@
 import React, { Component } from 'react';
 import { Grid, Table, Button, Form, Image, Header, Icon, Menu, Modal, Sidebar, Container, Card } from 'semantic-ui-react';
-import Layout from '../../components/Layout';
-import web3 from '../../Ethereum/web3';
+import Layout from '../../../components/Layout';
+import web3 from '../../../Ethereum/web3';
 import Cookies from 'js-cookie';
-import {Link,Router} from '../../routes';
-import Election from '../../Ethereum/election';
-import ipfs from '../../ipfs';
-import {Helmet} from 'react-helmet';
+import Link from 'next/link';
+import Router from 'next/router';
+import Election from '../../../Ethereum/election';
+import ipfs from '../../../ipfs';
+import Head from "next/head";
 class VotingList extends Component { 
 
     state = {
@@ -30,7 +31,7 @@ class VotingList extends Component {
                 election_name: summary[0],
                 election_description: summary[1]
             });            
-            const c = await election.methods.getNumOfCandidates.call();
+            const c = await election.methods.getNumOfCandidates().call();
             if(c == 0)
                 alert("Register a candidate first!");
 
@@ -61,7 +62,7 @@ class VotingList extends Component {
         } catch(err) {
             console.log(err.message);
             alert("Redirecting you to login page...");
-            Router.pushRoute('/company_login');
+            Router.push('/company_login');
         }
     }
     getElectionDetails = () => {
@@ -103,52 +104,86 @@ class VotingList extends Component {
         this.setState({buffer});
     };
     
-    onSubmit = async (event) => {
-        event.preventDefault();
-        this.setState({loading: true});
-        const accounts = await web3.eth.getAccounts();
-        
-        try {
-        await ipfs.add(this.state.buffer, (err, ipfsHash) => {
-            this.setState({ ipfsHash: ipfsHash[0].hash });
-                    
-            const add = Cookies.get('address');
-            const election = Election(add);
+onSubmit = async (event) => {
+	event.preventDefault();
 
-            election.methods.addCandidate(this.state.cand_name,this.state.cand_desc,this.state.ipfsHash,document.getElementById('email').value).send({
-                from: accounts[0]}, (error, transactionHash) => {}
-            );       
-        })
-            alert("Added!");
-        } catch (err) {
-            alert("Error in file processing.");
-        }
-        //ajax script below
-        const email = document.getElementById('email').value;
-            var http = new XMLHttpRequest();
-            var url = "/candidate/registerCandidate";
-            var params = "email=" + email+ "&election_name=" + this.state.election_name;
-            http.open("POST", url, true);
-            //Send the proper header information along with the request
-            http.setRequestHeader(
-                "Content-type",
-                "application/x-www-form-urlencoded"
-            );
-            http.onreadystatechange = function() {
-                //Call a function when the state changes.
-                if (http.readyState == 4 && http.status == 200) {
-                    var responseObj = JSON.parse(http.responseText);
-                    if(responseObj.status=="success") {
-                      alert(responseObj.message);
-                    }
-                    else {
-                      alert(responseObj.message);
-                    }
-                }
-            };
-            http.send(params);
-            this.setState({loading: false});
-    };
+	this.setState({ loading: true });
+
+	try {
+		const accounts = await web3.eth.getAccounts();
+
+		// CHECK BUFFER
+		if (!this.state.buffer) {
+			alert("Please upload image first");
+			this.setState({ loading: false });
+			return;
+		}
+
+		// IPFS UPLOAD (SAFE VERSION)
+		const result = await ipfs.add(this.state.buffer);
+
+		const ipfsHash = result.path || result.cid?.toString();
+
+		this.setState({ ipfsHash });
+
+		// CHECK ADDRESS
+		const add = Cookies.get("address");
+
+		if (!add) {
+			alert("Missing election address");
+			Router.push("/company_login");
+			return;
+		}
+
+		const election = Election(add);
+
+		// BLOCKCHAIN CALL
+		await election.methods
+			.addCandidate(
+				this.state.cand_name,
+				this.state.cand_desc,
+				ipfsHash,
+				document.getElementById("email").value
+			)
+			.send({
+				from: accounts[0],
+			});
+
+		alert("Added successfully!");
+
+		// AJAX
+		const email = document.getElementById("email").value;
+
+		const http = new XMLHttpRequest();
+		const url = "/candidate/registerCandidate";
+
+		const params =
+			"email=" +
+			email +
+			"&election_name=" +
+			this.state.election_name;
+
+		http.open("POST", url, true);
+		http.setRequestHeader(
+			"Content-type",
+			"application/x-www-form-urlencoded"
+		);
+
+		http.onreadystatechange = function () {
+			if (http.readyState === 4 && http.status === 200) {
+				const responseObj = JSON.parse(http.responseText);
+				alert(responseObj.message);
+			}
+		};
+
+		http.send(params);
+	} catch (err) {
+		console.log("FULL ERROR:", err);
+		alert(err?.message || "Error in file processing");
+	}
+
+	this.setState({ loading: false });
+};
     
     GridExampleGrid = () => <Grid>{columns}</Grid>
     SidebarExampleVisible = () => (
@@ -157,7 +192,7 @@ class VotingList extends Component {
           <Menu.Item as='a' style={{ color: 'grey' }} >
           <h2>MENU</h2><hr/>
           </Menu.Item>      
-          <Link route={`/election/${Cookies.get('address')}/company_dashboard`}>
+          <Link href={`/election/${Cookies.get('address')}/company_dashboard`}>
           <a>
             <Menu.Item style={{ color: 'grey' }}>
               <Icon name='dashboard'/>
@@ -165,7 +200,7 @@ class VotingList extends Component {
             </Menu.Item>
             </a>
             </Link>
-            <Link route={`/election/${Cookies.get('address')}/candidate_list`}>
+            <Link href={`/election/${Cookies.get('address')}/candidate_list`}>
             <a>
             <Menu.Item as='a' style={{ color: 'grey' }}>
               <Icon name='user outline' />
@@ -173,7 +208,7 @@ class VotingList extends Component {
             </Menu.Item>
             </a>
             </Link>
-            <Link route={`/election/${Cookies.get('address')}/voting_list`}>
+            <Link href={`/election/${Cookies.get('address')}/voting_list`}>
             <a>
             <Menu.Item as='a' style={{ color: 'grey' }}>
               <Icon name='list' />
@@ -191,26 +226,25 @@ class VotingList extends Component {
           </Sidebar>
         </Sidebar.Pushable>
       )
-      signOut() {
-          Cookies.remove('address');
-          Cookies.remove('company_email');
-          Cookies.remove('company_id');
-          alert("Logging out.");
-          import { useRouter } from 'next/router'
+signOut = () => {
+	Cookies.remove('address');
+	Cookies.remove('company_email');
+	Cookies.remove('company_id');
 
-const router = useRouter()
-router.push('/homepage');
-      }
+	alert('Logging out.');
+
+	Router.push('/homepage');
+};
   
 
   render() {
       const {Body, Row, HeaderCell, Header} = Table;
     return (
       <div>
-          <Helmet>
+          <Head>
             <title>Candidate list!</title>
             <link rel="shortcut icon" type="image/x-icon" href="../../public/logo3.png" />
-          </Helmet>
+          </Head>
         <Grid>
           <Grid.Row>
             <Grid.Column width={2}>
@@ -252,7 +286,7 @@ router.push('/homepage');
                         <p>Image:</p>
                        
                         
-                        <div class="ui fluid" style={{ borderWidth: '0px', marginRight: '20%' }}>
+                        <div className="ui fluid" style={{ borderWidth: '0px', marginRight: '20%' }}>
                           <input type="file" class="inputfile" id="embedpollfileinput"                           
                             onChange={this.captureFile}
                             style={{ maxWidth: '0.1px', maxHeight: '0.1px', zIndex: '-1', overflow: 'hidden', position: 'absolute' }} 

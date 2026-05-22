@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Button, Form, Grid, Header, Segment, Icon, Message } from 'semantic-ui-react';
-import web3 from '../../Ethereum/web3';
-import Election_Factory from '../../Ethereum/election_factory';
+import web3 from '../../../Ethereum/web3';
+import Election_Factory from '../../../Ethereum/election_factory';
 import { Router } from '../../routes';
 import Cookies from 'js-cookie';
 class LoginForm extends Component {

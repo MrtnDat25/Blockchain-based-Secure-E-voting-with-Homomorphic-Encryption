@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { Grid, Button, Header, Icon, Image, Menu, Sidebar, Container, Card } from 'semantic-ui-react';
-import Layout from '../../components/Layout'; 
-import web3 from '../../Ethereum/web3';
-import Election from '../../Ethereum/election';
+import Layout from '../../../components/Layout'; 
+import web3 from '../../../Ethereum/web3';
+import Election from '../../../Ethereum/election';
 import Cookies from 'js-cookie';
 import {Router} from '../../routes';
 import {Helmet} from 'react-helmet';

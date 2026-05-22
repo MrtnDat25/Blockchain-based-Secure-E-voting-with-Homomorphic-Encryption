@@ -1,16 +1,17 @@
-import Web3 from 'web3';
+import Web3 from "web3";
 
 let web3;
 
-if (
-	typeof window !== 'undefined' &&
-	typeof window.ethereum !== 'undefined'
-) {
-	web3 = new Web3(window.ethereum);
+if (typeof window !== "undefined" && typeof window.ethereum !== "undefined") {
+  window.ethereum.request({ method: "eth_requestAccounts" });
+
+  web3 = new Web3(window.ethereum);
 } else {
-	web3 = new Web3(
-		'https://sepolia.infura.io/v3/29bcae4ee7454a118a2b0f0f4d86c0e0'
-	);
+  const provider = new Web3.providers.HttpProvider(
+    "http://127.0.0.1:7545"
+  );
+
+  web3 = new Web3(provider);
 }
 
 export default web3;
