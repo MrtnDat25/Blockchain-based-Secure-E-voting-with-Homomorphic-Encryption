@@ -40,7 +40,7 @@ class ContainerExampleContainer extends Component {
 			console.log('Address:', add);
 
 			// check login
-			if (!add) {
+			if (!add || add === "undefined" || add === null) {
 				alert('Please login first');
 				Router.push('/company_login');
 				return;
@@ -81,13 +81,17 @@ class ContainerExampleContainer extends Component {
 				.getElectionDetails()
 				.call();
 
-			const voters = await election.methods
+			const voters = Number(
+			await election.methods
 				.getNumOfVoters()
-				.call();
+				.call()
+			);
 
-			const candidates = await election.methods
+			const candidates = Number(
+			await election.methods
 				.getNumOfCandidates()
-				.call();
+				.call()
+			);
 
 			let graphEmail = [];
 			let graphVotes = [];
@@ -98,7 +102,7 @@ class ContainerExampleContainer extends Component {
 					.call();
 
 				graphEmail.push(tp[0]);
-				graphVotes.push(tp[3]);
+				graphVotes.push(Number(tp[3]));
 			}
 
 			this.setState({
@@ -114,7 +118,7 @@ class ContainerExampleContainer extends Component {
 
 			alert('Something went wrong');
 
-			Router.push('/company_login');
+			Router.replace('/company_login');
 		}
 	}
 
@@ -136,7 +140,7 @@ class ContainerExampleContainer extends Component {
 
 			const add = Cookies.get('address');
 
-			if (!add) {
+			if (!add || add === "undefined" || add === null) {
 				Router.push('/company_login');
 				return;
 			}
@@ -256,7 +260,7 @@ class ContainerExampleContainer extends Component {
 										href={
 											{
 												pathname : "/election/[address]/company_dashboard",
-												query : { address: Cookies.get('address')}
+												query: { address: this.state.election_address }
 											}
 										}
 									>
@@ -272,7 +276,7 @@ class ContainerExampleContainer extends Component {
 										href={
 											{
 												pathname : "/election/[address]/candidate_list",
-												query : { address: Cookies.get('address')}
+												query: { address: this.state.election_address }
 											}
 										}
 									>
@@ -285,13 +289,11 @@ class ContainerExampleContainer extends Component {
 									</Link>
 
 									<Link
-										href={
-											{
-												pathname : "/election/[address]/voting_list",
-												query : { address: Cookies.get('address')}
-											}
-										}
-									>
+										href={{
+											pathname: "/election/[address]/voting_list",
+											query: { address: this.state.election_address }
+										}}
+										>
 										<Menu.Item
 											style={{ color: 'grey' }}
 										>

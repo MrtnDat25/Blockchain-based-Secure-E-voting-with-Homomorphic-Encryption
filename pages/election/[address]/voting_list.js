@@ -5,161 +5,173 @@ import Cookies from 'js-cookie';
 import Link from 'next/link'
 import Head from 'next/head';
 import Election from '../../../Ethereum/election';
-
+import Router from 'next/router';
+import { withRouter } from "next/router";
 class VotingList extends Component { 
 
-    state = {
-        loading : false,
-        election_address: Cookies.get('address'),
-        election_name: '',
-        election_description: '',
-        emailArr: [],
-        idArr: [],
-        item: [],
-    }
-
-    async componentDidMount() {        
-        var http = new XMLHttpRequest();
-        var url = '/voter/';        
-        var params = 'election_address='+this.state.election_address;
-        http.open("POST", url, true);
-        let email=[];
-        let id=[]
-        //Send the proper header information along with the request
-        http.setRequestHeader(
-            "Content-type",
-            "application/x-www-form-urlencoded"
-        );
-        http.onreadystatechange = function() {
-            //Call a function when the state changes.
-            if (http.readyState == 4 && http.status == 200) {
-                var responseObj = JSON.parse(http.responseText);
-                if(responseObj.status=="success") {
-                  for (let voter of responseObj.data.voters) {
-                        email.push(voter.email);
-                        id.push(voter.id);    
-                  } 
-                }                
-            }
-        };
-        http.send(params);
-        this.state.emailArr.push(email);
-        this.state.idArr.push(id);
-
-        try {
-            const add = Cookies.get('address');
-            const election = Election(add);
-            const summary = await election.methods.getElectionDetails().call();
-            this.setState({
-                election_name: summary[0],
-                election_description: summary[1]
-            });
-
-        } catch(err) {
-            console.log(err.message);
-            alert("Redirecting you to login page...");
-            Router.pushRoute('/company_login');
+        state = {
+          loading: false,
+          election_address: Cookies.get('address'),
+          election_name: '',
+          election_description: '',
+          voters: [],
+          item: []
         }
-        let ea = [];
-        ea = this.state.emailArr[0];
-        let ia = [];
-        ia = this.state.idArr[0];            
-        
-        let i=-1;
-        const items = ia.map(ia => {
-            i++;
-            return {
-              header: email[i],
-              description: (
-                <div>                
-                  <br />
-                  
-                  <Modal size={"tiny"} trigger={
-                      <Button basic id={ia} color="green">                        
-                        Edit
-                      </Button>
-                    }closeIcon
-                  >
-                    <Modal.Header>Edit E-mail ID</Modal.Header>
-                    <center>
-                      <Modal.Content>
-                        <Input id={`EmailVal${ia}`} placeholder='E-mail ID' style={{marginBottom: '5%',marginTop: '5%'}}/>
-                      </Modal.Content>
-                      <Modal.Actions>
-                        <Button
-                          positive
-                          icon="checkmark"
-                          labelPosition="right"
-                          content="Yes"
-                          padding="30"
-                          style={{ marginBottom: "10px" }}
-                          onClick={this.updateEmail}
-                          id={ia} 
-                        />
-                        <Button negative>No</Button>
-                      </Modal.Actions>
-                    </center>
-                  </Modal>
-                  <Button negative basic id={ia} value={ia} onClick={this.deleteEmail}>Delete</Button>
-                </div>
-              )
-            };
-        });
-        this.setState({item: items});
+
+async componentDidMount() {
+
+  let add = this.props.router?.query?.address;
+
+  // NEXT ROUTER LOAD CHẬM
+  if (!add) {
+    add = window.location.pathname.split("/")[2];
+  }
+
+  // fallback cookie
+  if (!add) {
+    add = Cookies.get("address");
+  }
+
+  console.log("ADDRESS:", add);
+
+  if (!add || add === "undefined") {
+    return;
+  }
+
+  try {
+
+    const election = Election(add);
+
+    const summary = await election.methods
+      .getElectionDetails()
+      .call();
+
+    this.setState({
+      election_address: add,
+      election_name: summary[0],
+      election_description: summary[1]
+    });
+
+    // API
+    const response = await fetch('/voter/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'election_address=' + add
+    });
+
+    const data = await response.json();
+
+    let voters = [];
+
+    if (data.status === "success") {
+      voters = data.data.voters;
     }
 
-    updateEmail = event => {
-        
-        const d = event.currentTarget.id;
-        const st = 'EmailVal'+event.currentTarget.id;
-        const a = document.getElementById(st).value;
-        const b = this.state.election_name;
-        const c = this.state.election_description;
-        //further proceed
+    const items = voters.map(voter => ({
+      header: voter.email,
+      description: (
+        <div>
 
-        var http = new XMLHttpRequest();
-        var url = '/voter/'+d;  
-        var params = 'email='+a+'&election_name='+b+'&election_description='+c;
-        http.open("PUT", url, true);
-        //Send the proper header information along with the request
-        http.setRequestHeader(
-            "Content-type",
-            "application/x-www-form-urlencoded"
-        );
-        http.onreadystatechange = function() {
-            //Call a function when the state changes.
-            if (http.readyState == 4 && http.status == 200) {
-                var responseObj = JSON.parse(http.responseText);
-                if(responseObj.status=="success") {
-                  alert(responseObj.message);
-                }
+          <Modal
+            size="tiny"
+            trigger={
+              <Button basic color="green">
+                Edit
+              </Button>
             }
-        };
-        http.send(params);
-    }
+            closeIcon
+          >
 
-    deleteEmail = event => {
-        //further proceed
+            <Modal.Header>
+              Edit E-mail ID
+            </Modal.Header>
 
-        var http = new XMLHttpRequest();
-        var url = '/voter/'+event.currentTarget.value;        
-        http.open("DELETE", url, true);
-        //Send the proper header information along with the request
-        http.setRequestHeader(
-            "Content-type",
-            "application/x-www-form-urlencoded"
-        );
-        http.onreadystatechange = function() {
-            //Call a function when the state changes.
-            if (http.readyState == 4 && http.status == 200) {
-                var responseObj = JSON.parse(http.responseText);
-                if(responseObj.status=="success") {
-                  alert(responseObj.message);
-                }                
-            }
-        };
-        http.send();
-    }
+            <Modal.Content>
+              <Input
+                id={`EmailVal${voter.id}`}
+                placeholder='E-mail ID'
+              />
+            </Modal.Content>
+
+            <Modal.Actions>
+              <Button
+                positive
+                onClick={() => this.updateEmail(voter.id)}
+              >
+                Yes
+              </Button>
+
+              <Button negative>
+                No
+              </Button>
+
+            </Modal.Actions>
+
+          </Modal>
+
+          <Button
+            negative
+            basic
+            onClick={() => this.deleteEmail(voter.id)}
+          >
+            Delete
+          </Button>
+
+        </div>
+      )
+    }));
+
+    this.setState({
+      item: items
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    alert("Cannot load election");
+
+  }
+}
+
+      updateEmail = async (id) => {
+      const email = document.getElementById(`EmailVal${id}`).value;
+
+      const http = new XMLHttpRequest();
+      http.open("PUT", `/voter/${id}`, true);
+
+      http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+      http.onreadystatechange = function () {
+        if (http.readyState === 4 && http.status === 200) {
+          const res = JSON.parse(http.responseText);
+          alert(res.message);
+        }
+      };
+
+      const params =
+        "email=" + email +
+        "&election_name=" + this.state.election_name +
+        "&election_description=" + this.state.election_description;
+
+      http.send(params);
+    };
+
+    deleteEmail = async (id) => {
+    const http = new XMLHttpRequest();
+    http.open("DELETE", `/voter/${id}`, true);
+
+    http.onreadystatechange = function () {
+      if (http.readyState === 4 && http.status === 200) {
+        const res = JSON.parse(http.responseText);
+        alert(res.message);
+      }
+    };
+
+    http.send();
+  };
 
     renderTable = () => {
         return (<Card.Group items={this.state.item}/>)
@@ -174,7 +186,7 @@ class VotingList extends Component {
         </Menu.Item>      
         <Link href={{
           pathname: "/election/[address]/company_dashboard",
-          query : { address: Cookies.get('address')}
+          query : { address: this.props.router.query.address }
         }}>
         <a>
           <Menu.Item style={{ color: 'grey', fontColor: 'grey' }}>
@@ -186,7 +198,7 @@ class VotingList extends Component {
           <Link href={
             {
               pathname: "/election/[address]/candidate_list",
-              query : {address: Cookies.get('address')}
+              query : { address: this.props.router.query.address }
             }
           }>
           <a>
@@ -198,8 +210,8 @@ class VotingList extends Component {
           </Link>
           <Link href={
             {
-              pathname : "election/[address]/voting_list",
-              query : { address: Cookies.get('address')}
+              pathname : "/election/[address]/voting_list",
+              query : { address: this.props.router.query.address }
             }
           }>
           <a>
@@ -219,57 +231,82 @@ class VotingList extends Component {
         </Sidebar>
       </Sidebar.Pushable>
     )
-    signOut() {
-        Cookies.remove('address');
-        Cookies.remove('company_email');
-        Cookies.remove('company_id');
-        alert("Logging out.");
+signOut = () => {
+  Cookies.remove('address');
+  Cookies.remove('company_email');
+  Cookies.remove('company_id');
+  alert("Logging out....")
+  Router.push('/homepage');
+};
 
-Router.push('/homepage');
-    }
+register = async (event) => {
 
-   register = (event) => {
   event.preventDefault();
 
-  this.setState({ loading: true });
+  this.setState({
+    loading: true
+  });
 
-  const email = document.getElementById('register_voter_email').value;
+  try {
 
-  const http = new XMLHttpRequest();
-  const url = "/voter/register";
+    const email = document.getElementById(
+      "register_voter_email"
+    ).value;
 
-  const params =
-    "email=" +
-    email +
-    "&election_address=" +
-    this.state.election_address +
-    "&election_name=" +
-    this.state.election_name +
-    "&election_description=" +
-    this.state.election_description;
+    const add =
+      this.state.election_address ||
+      this.props.router.query.address;
 
-  http.open("POST", url, true);
+    console.log("EMAIL:", email);
+    console.log("ADDRESS:", add);
 
-  http.setRequestHeader(
-    "Content-type",
-    "application/x-www-form-urlencoded"
-  );
+    const response = await fetch(
+      "/voter/register",
+      {
+        method: "POST",
 
-  http.onreadystatechange = () => {
-    if (http.readyState === 4) {
-      this.setState({ loading: false });
+        headers: {
+          "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
 
-      if (http.status === 200) {
-        const responseObj = JSON.parse(http.responseText);
-
-        alert(responseObj.message);
-      } else {
-        alert("Request failed");
+        body:
+          `email=${email}` +
+          `&election_address=${add}` +
+          `&election_name=${this.state.election_name}` +
+          `&election_description=${this.state.election_description}`
       }
-    }
-  };
+    );
 
-  http.send(params);
+    console.log("STATUS:", response.status);
+
+    const data = await response.json();
+
+    console.log("DATA:", data);
+
+    if (response.ok) {
+
+      alert(data.message);
+
+      window.location.reload();
+
+    } else {
+
+      alert(data.message || "Register failed");
+
+    }
+
+  } catch (err) {
+
+    console.log("REGISTER ERROR:", err);
+
+    alert(err.message);
+
+  }
+
+  this.setState({
+    loading: false
+  });
 };
 	
   render() {      
@@ -305,9 +342,9 @@ Router.push('/homepage');
                        </Header>
                     <Card style={{ width: '100%' }}>
                       <br/>
-                      <Form.Group size='large' style={{ marginLeft: '15%', marginRight: '15%' }} >
+                      <Form size='large' style={{ marginLeft: '15%', marginRight: '15%' }} >
                         <Form.Input
-						style={{marginTop: '10px'}}
+						              style={{marginTop: '10px'}}
                           fluid
                           id='register_voter_email'
                           label='Email:'
@@ -320,10 +357,13 @@ Router.push('/homepage');
                           primary
                           loading={this.state.loading}
                           onClick={this.register}
+                          style={{
+                            marginBottom: '15px'
+                          }}
                         >
                           Register
                         </Button>
-                      </Form.Group>
+                      </Form>
                     </Card>
                   </Container>
                 </Grid.Column>                
@@ -337,4 +377,5 @@ Router.push('/homepage');
 }
 
 
-export default VotingList
+export default withRouter(VotingList);
+// export default VotingList

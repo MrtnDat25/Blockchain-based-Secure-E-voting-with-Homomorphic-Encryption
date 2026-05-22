@@ -1,199 +1,259 @@
-import PropTypes from 'prop-types';
-import React, { Component } from 'react';
-// import Link from 'next/link';
-import Link from 'next/link';
+import React, { Component } from "react";
+import Link from "next/link";
+import Head from "next/head";
+
 import {
-	Button,
-	Container,
-	Divider,
-	Grid,
-	Header,
-	Icon,
-	Image,
-	List,
-	Menu,
-	div,
-	Segment,
-	Sidebar,
-	Visibility,
-} from 'semantic-ui-react';
+  Button,
+  Container,
+  Grid,
+  Header,
+  Icon,
+  Image,
+  Menu,
+  Segment,
+} from "semantic-ui-react";
 
-import Head from 'next/head';
-const HomepageHeading = ({ mobile }) => (
-	<Container text className="cont">
-		<Header
-			as="h1"
-			content="A blockchain-based E-voting system, built with love."
-			inverted
-			style={{
-				fontSize: mobile ? '2em' : '3em',
-				fontWeight: 'normal',
-				marginBottom: 0,
-				marginTop: mobile ? '1.5em' : '2em',
-				color: 'black',
-			}}
-		/>
-		<Header
-			as="h4"
-			content="Make your vote count!"
-			inverted
-			style={{
-				fontSize: mobile ? '1.5em' : '1.7em',
-				fontWeight: 'normal',
-				marginTop: mobile ? '0.5em' : '1.5em',
-				color: 'grey',
-			}}
-		/>
-		<div style={{ float: 'left', marginTop: '10%' }}>
-			<Header as="h4" style={{ color: 'grey' }}>
-				Register/ Sign in for the company
-			</Header>
-			<Link href="./company_login">
-				<Button primary size="huge" style={{ color: 'white', backgroundColor: '#627eea' }}>
-					<Icon name="left arrow" />
-					Company
-				</Button>
-			</Link>
-		</div>
+class HomepageLayout extends Component {
+  renderHero = () => {
+    return (
+      <div className="hero-section">
+        <Menu secondary size="large" className="menu">
+          <Container>
+            <h1 className="logo">BlockVotes</h1>
+          </Container>
+        </Menu>
 
-		<div style={{ float: 'right', marginTop: '10%' }}>
-			<Header as="h4" style={{ color: 'grey' }}>
-				{' '}
-				Sign in for Voters!
-			</Header>
-			<Link href="/voter_login">
-				<Button primary size="huge" style={{ color: 'white', backgroundColor: '#627eea' }}>
-					Voters
-					<Icon name="right arrow" />
-				</Button>
-			</Link>
-		</div>
-	</Container>
-);
+        <Container text textAlign="center" className="hero-content">
+          <Header
+            as="h1"
+            content="A blockchain-based E-voting system, built with love."
+            style={{
+              fontSize: "4rem",
+              fontWeight: "normal",
+              color: "black",
+              lineHeight: 1.4,
+            }}
+          />
 
-HomepageHeading.propTypes = {
-	mobile: PropTypes.bool,
-};
+          <Header
+            as="h3"
+            content="Make your vote count!"
+            style={{
+              fontSize: "2rem",
+              fontWeight: "normal",
+              color: "grey",
+              marginTop: "1.5rem",
+            }}
+          />
 
-class DesktopContainer extends Component {
-	state = {};
+          <Grid columns={2} stackable style={{ marginTop: "6rem" }}>
+            <Grid.Column textAlign="center">
+              <Header as="h4" style={{ color: "grey" }}>
+                Register / Sign in for the company
+              </Header>
 
-	hideFixedMenu = () => this.setState({ fixed: false });
-	showFixedMenu = () => this.setState({ fixed: true });
+              <Link href="/company_login">
+                <Button
+                  primary
+                  size="huge"
+                  style={{
+                    backgroundColor: "#627eea",
+                    marginTop: "1rem",
+                  }}
+                >
+                  <Icon name="left arrow" />
+                  Company
+                </Button>
+              </Link>
+            </Grid.Column>
 
-	render() {
-		const { children } = this.props;
-		const { fixed } = this.state;
+            <Grid.Column textAlign="center">
+              <Header as="h4" style={{ color: "grey" }}>
+                Sign in for Voters!
+              </Header>
 
-		return (
-			<div>
-				<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" />
-				<Head>
-					<title>HomePage</title>
-					<link rel="shortcut icon" href="/logo3.png" />
-				</Head>
-				<Visibility once={false} onBottomPassed={this.showFixedMenu} onBottomPassedReverse={this.hideFixedMenu}>
-					<Segment inverted textAlign="center" style={{ minHeight: 700, padding: '1em 0em' }} vertical>
-						<Menu
-							fixed={fixed ? 'top' : null}
-							inverted={!fixed}
-							pointing={!fixed}
-							secondary={!fixed}
-							size="large"
-							className="menu"
-						>
-							<Container>
-								<h1
-									style={{
-										color: '#627eea',
-										verticalAlign: 'middle',
-										fontFamily: 'Freestyle Script',
-										fontSize: '400%',
-										paddingLeft: '42%',
-									}}
-								>
-									BlockVotes
-								</h1>
-							</Container>
-						</Menu>
-						<HomepageHeading />
-					</Segment>
-				</Visibility>
+              <Link href="/voter_login">
+                <Button
+                  primary
+                  size="huge"
+                  style={{
+                    backgroundColor: "#627eea",
+                    marginTop: "1rem",
+                  }}
+                >
+                  Voters
+                  <Icon name="right arrow" />
+                </Button>
+              </Link>
+            </Grid.Column>
+          </Grid>
+        </Container>
 
-				{children}
-			</div>
-		);
-	}
+        <style jsx>{`
+          .hero-section {
+            min-height: 100vh;
+            background: linear-gradient(
+                rgba(255, 255, 255, 0.75),
+                rgba(255, 255, 255, 0.75)
+              ),
+              url("/blockchain.jpg") no-repeat;
+            background-size: cover;
+            background-position: center;
+            padding-top: 1rem;
+          }
+
+          .logo {
+            width: 100%;
+            text-align: center;
+            color: #627eea;
+            font-size: 5rem;
+            font-family: "Georgia", serif;
+            margin-top: 1rem;
+          }
+
+          .hero-content {
+            margin-top: 8rem;
+          }
+        `}</style>
+      </div>
+    );
+  };
+
+  renderFeatures = () => {
+    return (
+      <Segment vertical style={{ padding: "8em 0em" }}>
+        <Grid container stackable verticalAlign="middle">
+          <Grid.Row columns={3}>
+            <Grid.Column textAlign="center">
+              <Header as="h2">Private</Header>
+
+              <p style={{ fontSize: "1.2rem" }}>
+                Doesn't give any information
+                <br />
+                regarding personal data.
+              </p>
+
+              <Header as="h2" style={{ marginTop: "3rem" }}>
+                Secure
+              </Header>
+
+              <p style={{ fontSize: "1.2rem" }}>
+                No single point of failure
+                <br />
+                in the voting system.
+              </p>
+            </Grid.Column>
+
+            <Grid.Column textAlign="center">
+              <Image
+                src="/public/ether2.png"
+                centered
+                style={{
+                  width: "220px",
+                }}
+              />
+            </Grid.Column>
+
+            <Grid.Column textAlign="center">
+              <Header as="h2">Decentralized</Header>
+
+              <p style={{ fontSize: "1.2rem" }}>
+                Blockchain technology distributes
+                <br />
+                trust across the network.
+              </p>
+
+              <Header as="h2" style={{ marginTop: "3rem" }}>
+                Immutable
+              </Header>
+
+              <p style={{ fontSize: "1.2rem" }}>
+                Votes cannot be modified
+                <br />
+                after submission.
+              </p>
+            </Grid.Column>
+          </Grid.Row>
+        </Grid>
+      </Segment>
+    );
+  };
+
+  renderQuote = () => {
+    return (
+      <Segment
+        inverted
+        vertical
+        style={{
+          padding: "5em 0em",
+          backgroundColor: "#627eea",
+        }}
+      >
+        <Container text>
+          <Header
+            as="h2"
+            textAlign="center"
+            style={{
+              color: "white",
+              marginBottom: "2rem",
+            }}
+          >
+            A fascinating quote
+          </Header>
+
+          <p
+            style={{
+              fontSize: "1.5rem",
+              textAlign: "center",
+              color: "white",
+              fontStyle: "italic",
+            }}
+          >
+            "We have elected to put our money and faith in a
+            mathematical framework that is free of politics and
+            human error."
+          </p>
+
+          <Header
+            as="h3"
+            textAlign="center"
+            style={{
+              color: "white",
+              marginTop: "2rem",
+            }}
+          >
+            Tyler Winklevoss
+          </Header>
+        </Container>
+      </Segment>
+    );
+  };
+
+  render() {
+    return (
+      <div>
+        <Head>
+          <title>HomePage</title>
+
+          <link
+            rel="stylesheet"
+            href="//cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css"
+          />
+
+          <link
+            rel="shortcut icon"
+            href="logo3.png"
+          />
+        </Head>
+
+        {this.renderHero()}
+
+        {this.renderFeatures()}
+
+        {this.renderQuote()}
+      </div>
+    );
+  }
 }
 
-DesktopContainer.propTypes = {
-	children: PropTypes.node,
-};
-
-const divContainer = ({ children }) => (
-	<div>
-		<DesktopContainer>{children}</DesktopContainer>
-	</div>
-);
-
-divContainer.propTypes = {
-	children: PropTypes.node,
-};
-
-const HomepageLayout = () => (
-	<divContainer>
-		<Segment style={{ padding: '8em 0em' }} vertical>
-			<Grid columns="equal" stackable>
-				<Grid.Row textAlign="center">
-					<Grid.Column style={{ paddingBottom: '5em', paddingTop: '5em' }}>
-						<Header as="h3" style={{ fontSize: '2em' }}>
-							Private
-						</Header>
-						<p style={{ fontSize: '1.33em' }}>
-							Doesn't give any information <br />
-							regarding personal data.
-						</p>
-						<Header as="h3" style={{ fontSize: '2em' }}>
-							Secure
-						</Header>
-						<p style={{ fontSize: '1.33em' }}>
-							Not even a single chance of shutting <br /> down of the system.
-						</p>
-					</Grid.Column>
-					<Image src="/ether2.png" width="216" height="256" style={{ paddingTop: '50px' }} />
-
-					<Grid.Column style={{ paddingBottom: '5em', paddingTop: '5em' }}>
-						<Header as="h3" style={{ fontSize: '2em' }}>
-							Decentralized
-						</Header>
-						<p style={{ fontSize: '1.33em' }}>
-							Decentralized technology gives you the <br /> power to store your assets in a network.
-						</p>
-						<Header as="h3" style={{ fontSize: '2em' }}>
-							Immutable
-						</Header>
-						<p style={{ fontSize: '1.33em' }}>
-							Keeps its ledgers in a never-ending <br /> state of forwarding momentum.
-						</p>
-					</Grid.Column>
-				</Grid.Row>
-			</Grid>
-		</Segment>
-
-		<Segment inverted vertical style={{ padding: '5em 0em', backgroundColor: '#627eea' }}>
-			<Container>
-				<Header as="h3" style={{ fontSize: '2em', color: 'white', textAlign: 'center' }}>
-					A fascinating quote
-				</Header>
-				<p style={{ fontSize: '1.33em', textAlign: 'center', fontStyle: 'Italic' }}>
-					"We have elected to put our money and faith in a mathematical framework that is free of politics and
-					human error."
-				</p>
-				<Header as="h2" style={{ fontSize: '1.33em', color: 'white', textAlign: 'center' }}>
-					Tyler Winklevoss
-				</Header>
-			</Container>
-		</Segment>
-	</divContainer>
-);
 export default HomepageLayout;

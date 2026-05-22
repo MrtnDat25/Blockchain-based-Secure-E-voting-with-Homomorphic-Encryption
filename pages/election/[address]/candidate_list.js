@@ -140,7 +140,7 @@ onSubmit = async (event) => {
     this.setState({ pinataHash: hash });
 
     // 3. check election address
-    const add = Cookies.get("address");
+    // const add = Cookies.get("address");
 
     if (!add) {
       alert("Missing election address");
