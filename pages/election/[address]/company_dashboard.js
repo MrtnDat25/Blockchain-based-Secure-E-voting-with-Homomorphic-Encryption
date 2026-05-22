@@ -253,7 +253,12 @@ class ContainerExampleContainer extends Component {
 									</Menu.Item>
 
 									<Link
-										href={`/election/company_dashboard`}
+										href={
+											{
+												pathname : "/election/[address]/company_dashboard",
+												query : { address: Cookies.get('address')}
+											}
+										}
 									>
 										<Menu.Item
 											style={{ color: 'grey' }}
@@ -264,7 +269,12 @@ class ContainerExampleContainer extends Component {
 									</Link>
 
 									<Link
-										href={`/election/candidate_list`}
+										href={
+											{
+												pathname : "/election/[address]/candidate_list",
+												query : { address: Cookies.get('address')}
+											}
+										}
 									>
 										<Menu.Item
 											style={{ color: 'grey' }}
@@ -275,7 +285,12 @@ class ContainerExampleContainer extends Component {
 									</Link>
 
 									<Link
-										href={`/election/voting_list`}
+										href={
+											{
+												pathname : "/election/[address]/voting_list",
+												query : { address: Cookies.get('address')}
+											}
+										}
 									>
 										<Menu.Item
 											style={{ color: 'grey' }}

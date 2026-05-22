@@ -101,11 +101,12 @@ signin = async () => {
     console.log("COOKIE SAVED:", summary[0]);
 
     // REDIRECT
-    setTimeout(() => {
-      Router.push(
-        `/election/company_dashboard`
-      );
-    }, 300);
+   setTimeout(() => {
+  Router.push({
+  pathname: "/election/[address]/company_dashboard",
+  query: { address: Cookies.get("address") }
+});
+}, 300);
 
   } catch (err) {
     console.log(err);

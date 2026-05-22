@@ -172,7 +172,10 @@ class VotingList extends Component {
         <Menu.Item as='a' style={{ color: 'grey' }} >
         <h2>MENU</h2><hr/>
         </Menu.Item>      
-        <Link href={`/election/company_dashboard`}>
+        <Link href={{
+          pathname: "/election/[address]/company_dashboard",
+          query : { address: Cookies.get('address')}
+        }}>
         <a>
           <Menu.Item style={{ color: 'grey', fontColor: 'grey' }}>
             <Icon name='dashboard'/>
@@ -188,7 +191,12 @@ class VotingList extends Component {
           </Menu.Item>
           </a>
           </Link>
-          <Link href={`/election/${Cookies.get('address')}/voting_list`}>
+          <Link href={
+            {
+              pathname : "election/[address]/voting_list",
+              query : { address: Cookies.get('address')}
+            }
+          }>
           <a>
           <Menu.Item as='a' style={{ color: 'grey' }}>
             <Icon name='list' />

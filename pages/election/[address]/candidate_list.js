@@ -8,6 +8,10 @@ import Router from 'next/router';
 import Election from '../../../Ethereum/election';
 import ipfs from '../../../ipfs';
 import Head from "next/head";
+
+
+
+
 class VotingList extends Component { 
 
     state = {
@@ -97,11 +101,11 @@ class VotingList extends Component {
         reader.onloadend = () => this.convertToBuffer(reader)
     };
     
-    convertToBuffer = async(reader) => {
-        //file is converted to a buffer for upload to IPFS
-        const buffer = await Buffer.from(reader.result);
-        //set this buffer -using es6 syntax
-        this.setState({buffer});
+      convertToBuffer = (reader) => {
+        const buffer = Buffer.from(reader.result);
+        console.log("BUFFER:", buffer);
+        this.setState({ buffer });
+
     };
     
 onSubmit = async (event) => {
@@ -119,11 +123,14 @@ onSubmit = async (event) => {
 			return;
 		}
 
-		// IPFS UPLOAD (SAFE VERSION)
-		const result = await ipfs.add(this.state.buffer);
+        // IPFS UPLOAD (SAFE VERSION)
+    console.log("Uploading to IPFS...");
+    const added = await ipfs.add(this.state.buffer);
+    console.log("IPFS result:", added);
 
-		const ipfsHash = result.path || result.cid?.toString();
+    
 
+    const ipfsHash = added.path;
 		this.setState({ ipfsHash });
 
 		// CHECK ADDRESS
@@ -192,7 +199,13 @@ onSubmit = async (event) => {
           <Menu.Item as='a' style={{ color: 'grey' }} >
           <h2>MENU</h2><hr/>
           </Menu.Item>      
-          <Link href={`/election/${Cookies.get('address')}/company_dashboard`}>
+          <Link href={
+            {
+              pathname : "/election/[address]/company_dashboard",
+              query : { address: Cookies.get('address')}
+            }
+          }>
+          
           <a>
             <Menu.Item style={{ color: 'grey' }}>
               <Icon name='dashboard'/>
@@ -200,7 +213,12 @@ onSubmit = async (event) => {
             </Menu.Item>
             </a>
             </Link>
-            <Link href={`/election/${Cookies.get('address')}/candidate_list`}>
+            <Link href={
+            {
+              pathname : "/election/[address]/candidate_list",
+              query : { address: Cookies.get('address')}
+            }
+          }>
             <a>
             <Menu.Item as='a' style={{ color: 'grey' }}>
               <Icon name='user outline' />
@@ -208,7 +226,12 @@ onSubmit = async (event) => {
             </Menu.Item>
             </a>
             </Link>
-            <Link href={`/election/${Cookies.get('address')}/voting_list`}>
+            <Link href={
+            {
+              pathname : "/election/[address]/voting_list",
+              query : { address: Cookies.get('address')}
+            }
+          }>
             <a>
             <Menu.Item as='a' style={{ color: 'grey' }}>
               <Icon name='list' />
@@ -287,14 +310,15 @@ signOut = () => {
                        
                         
                         <div className="ui fluid" style={{ borderWidth: '0px', marginRight: '20%' }}>
-                          <input type="file" class="inputfile" id="embedpollfileinput"                           
-                            onChange={this.captureFile}
-                            style={{ maxWidth: '0.1px', maxHeight: '0.1px', zIndex: '-1', overflow: 'hidden', position: 'absolute' }} 
-                          />
-                          <label for="embedpollfileinput" class="ui huge blue right floated button" style={{ fontSize: '15px', marginRight: '30%' }}>
-                            <i class="ui upload icon"></i>
-                            Upload image
-                          </label>
+                          <input
+                              type="file"
+                              id="embedpollfileinput"
+                              onChange={this.captureFile}
+                            />
+
+                            <label htmlFor="embedpollfileinput">
+                              Upload image
+                            </label>
                         </div><br /><br /><br />
                         <p>Description:</p>
                         <Form.Input as='TextArea'
@@ -322,7 +346,7 @@ signOut = () => {
           </Grid.Row>
         </Grid>
       </div>
-    );
+  );
   }
 }
 
