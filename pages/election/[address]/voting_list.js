@@ -183,7 +183,12 @@ class VotingList extends Component {
           </Menu.Item>
           </a>
           </Link>
-          <Link href={`/election/candidate_list`}>
+          <Link href={
+            {
+              pathname: "/election/[address]/candidate_list",
+              query : {address: Cookies.get('address')}
+            }
+          }>
           <a>
           <Menu.Item as='a' style={{ color: 'grey' }}>
             <Icon name='user outline' />

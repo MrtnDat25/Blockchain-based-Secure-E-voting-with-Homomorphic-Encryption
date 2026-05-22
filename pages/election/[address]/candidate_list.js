@@ -6,24 +6,24 @@ import Cookies from 'js-cookie';
 import Link from 'next/link';
 import Router from 'next/router';
 import Election from '../../../Ethereum/election';
-import ipfs from '../../../ipfs';
+
 import Head from "next/head";
 
-
+import { uploadToPinata } from "../../../pinata";
 
 
 class VotingList extends Component { 
 
     state = {
-        election_address: Cookies.get('address'),
-        election_name: '',
-        election_description: '',
-        candidates: [],
-        cand_name: '',
-        cand_desc: '',
-        buffer: '',
-        ipfsHash: null,
-        loading: false
+      election_address: Cookies.get('address'),
+      election_name: '',
+      election_description: '',
+      candidates: [],
+      cand_name: '',
+      cand_desc: '',
+      file: null,
+      pinataHash: null,
+      loading: false
     }
 
     async componentDidMount() {
@@ -51,7 +51,7 @@ class VotingList extends Component {
               header: candidate[0],
               description: candidate[1],
               image: (
-                  <Image id={i} src={`https://ipfs.io/ipfs/${candidate[2]}`} style={{maxWidth: '100%',maxHeight:'190px'}}/>
+                  <Image src={`https://gateway.pinata.cloud/ipfs/${candidate[2]}`} />
                 ),
               extra: (
                   <div>
@@ -93,103 +93,108 @@ class VotingList extends Component {
     } 
 
     captureFile = (event) => {
-        event.stopPropagation()
-        event.preventDefault()
-        const file = event.target.files[0]
-        let reader = new window.FileReader()
-        reader.readAsArrayBuffer(file)
-        reader.onloadend = () => this.convertToBuffer(reader)
-    };
-    
-      convertToBuffer = (reader) => {
-        const buffer = Buffer.from(reader.result);
-        console.log("BUFFER:", buffer);
-        this.setState({ buffer });
+      event.stopPropagation();
+      event.preventDefault();
 
+      const file = event.target.files[0];
+
+      if (!file) {
+        alert("No file selected");
+        return;
+      }
+
+      let reader = new FileReader();
+
+      reader.readAsArrayBuffer(file);
+
+      reader.onloadend = () => {
+        const buffer = Buffer.from(reader.result);
+
+        this.setState({
+          file: file,
+          buffer: buffer
+        });
+      };
     };
+
     
 onSubmit = async (event) => {
-	event.preventDefault();
+  event.preventDefault();
+  this.setState({ loading: true });
 
-	this.setState({ loading: true });
+  try {
+    const accounts = await web3.eth.getAccounts();
 
-	try {
-		const accounts = await web3.eth.getAccounts();
+    const { file, cand_name, cand_desc } = this.state;
 
-		// CHECK BUFFER
-		if (!this.state.buffer) {
-			alert("Please upload image first");
-			this.setState({ loading: false });
-			return;
-		}
+    if (!file) {
+      alert("Please upload image first");
+      this.setState({ loading: false });
+      return;
+    }
 
-        // IPFS UPLOAD (SAFE VERSION)
-    console.log("Uploading to IPFS...");
-    const added = await ipfs.add(this.state.buffer);
-    console.log("IPFS result:", added);
+    // 1. upload Pinata
+    const hash = await uploadToPinata(file);
 
-    
+    // 2. save hash state (optional)
+    this.setState({ pinataHash: hash });
 
-    const ipfsHash = added.path;
-		this.setState({ ipfsHash });
+    // 3. check election address
+    const add = Cookies.get("address");
 
-		// CHECK ADDRESS
-		const add = Cookies.get("address");
+    if (!add) {
+      alert("Missing election address");
+      Router.push("/company_login");
+      return;
+    }
 
-		if (!add) {
-			alert("Missing election address");
-			Router.push("/company_login");
-			return;
-		}
+    const election = Election(add);
 
-		const election = Election(add);
+    // 4. blockchain call
+    await election.methods
+      .addCandidate(
+        cand_name,
+        cand_desc,
+        hash,
+        document.getElementById("email").value
+      )
+      .send({
+        from: accounts[0],
+      });
 
-		// BLOCKCHAIN CALL
-		await election.methods
-			.addCandidate(
-				this.state.cand_name,
-				this.state.cand_desc,
-				ipfsHash,
-				document.getElementById("email").value
-			)
-			.send({
-				from: accounts[0],
-			});
+    alert("Added successfully!");
 
-		alert("Added successfully!");
+    // 5. backend call
+    const email = document.getElementById("email").value;
 
-		// AJAX
-		const email = document.getElementById("email").value;
+    const params =
+      "email=" +
+      email +
+      "&election_name=" +
+      this.state.election_name;
 
-		const http = new XMLHttpRequest();
-		const url = "/candidate/registerCandidate";
+    const http = new XMLHttpRequest();
+    http.open("POST", "/candidate/registerCandidate", true);
+    http.setRequestHeader(
+      "Content-type",
+      "application/x-www-form-urlencoded"
+    );
 
-		const params =
-			"email=" +
-			email +
-			"&election_name=" +
-			this.state.election_name;
+    http.onreadystatechange = function () {
+      if (http.readyState === 4 && http.status === 200) {
+        const responseObj = JSON.parse(http.responseText);
+        alert(responseObj.message);
+      }
+    };
 
-		http.open("POST", url, true);
-		http.setRequestHeader(
-			"Content-type",
-			"application/x-www-form-urlencoded"
-		);
+    http.send(params);
 
-		http.onreadystatechange = function () {
-			if (http.readyState === 4 && http.status === 200) {
-				const responseObj = JSON.parse(http.responseText);
-				alert(responseObj.message);
-			}
-		};
+  } catch (err) {
+    console.log(err);
+    alert(err?.message || "Upload failed");
+  }
 
-		http.send(params);
-	} catch (err) {
-		console.log("FULL ERROR:", err);
-		alert(err?.message || "Error in file processing");
-	}
-
-	this.setState({ loading: false });
+  this.setState({ loading: false });
 };
     
     GridExampleGrid = () => <Grid>{columns}</Grid>
