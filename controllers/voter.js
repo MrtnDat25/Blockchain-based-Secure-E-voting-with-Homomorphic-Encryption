@@ -1,6 +1,6 @@
 const VoterModel = require('../models/voter');
 
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const path = require('path');
 

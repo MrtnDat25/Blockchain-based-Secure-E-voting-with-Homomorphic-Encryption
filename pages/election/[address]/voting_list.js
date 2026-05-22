@@ -53,17 +53,18 @@ async componentDidMount() {
     });
 
     // API
-    const response = await fetch('/voter/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 'election_address=' + add
-    });
+      const response = await fetch("/voter/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params,
+      });
 
-    const text = await response.text();
+      const text = await response.text();
+      console.log("RAW:", text);
 
-    console.log(text);
+      const data = JSON.parse(text);
 
     let voters = [];
 

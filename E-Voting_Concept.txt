@@ -130,3 +130,26 @@ Server take ciphertext from blockchain --> calculate formula
 Step 8 - Final Decryption
 Authority decode
 	--> Total ballot
+
+
+
+
+LOGIN:
+MetaMask connect
+→ web3.eth.getAccounts()
+→ contract call
+→ Router.push
+
+
+VOTING:
+send transaction → Sepolia → event → UI update
+
+✔ Blockchain dùng cho:
+Candidate
+Voting result
+Election logic
+✔ Express dùng cho:
+Voter register
+Login
+Email
+Database

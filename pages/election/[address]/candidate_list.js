@@ -22,6 +22,7 @@ class VotingList extends Component {
       cand_name: '',
       cand_desc: '',
       file: null,
+      buffer: null,
       pinataHash: null,
       loading: false
     }
@@ -29,6 +30,10 @@ class VotingList extends Component {
     async componentDidMount() {
         try {
             const add = Cookies.get('address');
+            if (!add) {
+              Router.push("/company_login");
+              return;
+            }
             const election = Election(add);
             const summary = await election.methods.getElectionDetails().call();
             this.setState({
@@ -140,7 +145,7 @@ onSubmit = async (event) => {
     this.setState({ pinataHash: hash });
 
     // 3. check election address
-    // const add = Cookies.get("address");
+    const add = Cookies.get("address");
 
     if (!add) {
       alert("Missing election address");
@@ -182,6 +187,7 @@ onSubmit = async (event) => {
 
     http.onreadystatechange = function () {
       if (http.readyState === 4 && http.status === 200) {
+        if (!http.responseText) return;
         const responseObj = JSON.parse(http.responseText);
         alert(responseObj.message);
       }
@@ -341,7 +347,7 @@ signOut = () => {
                          placeholder="Enter your e-mail"
                        />
                        <br/>
-                       <Button primary onClick={this.onSubmit} loading={this.state.loading} style={{Bottom: '10px',marginBottom: '10px'}}>Register</Button>
+                       <Button primary onClick={this.onSubmit} loading={this.state.loading} style={{marginBottom: '10px',marginBottom: '10px'}}>Register</Button>
                         </Form.Group>                                  
                       </Card> 
                     </Container>
