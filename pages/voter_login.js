@@ -45,7 +45,7 @@ class LoginForm extends Component {
         return;
       }
 
-      const response = await fetch("/voter/authenticate", {
+      const response = await fetch("/api/voter/authenticate", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
