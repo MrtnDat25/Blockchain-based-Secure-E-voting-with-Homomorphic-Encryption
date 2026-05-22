@@ -5,11 +5,13 @@ import {
   Grid,
   Header,
   Segment,
+  Icon,
 } from "semantic-ui-react";
 
 import Cookies from "js-cookie";
 import Router from "next/router";
 import Head from "next/head";
+import Link from "next/link";
 
 class LoginForm extends Component {
   state = {
@@ -111,6 +113,28 @@ class LoginForm extends Component {
           verticalAlign="middle"
         >
           <Grid.Column style={{ maxWidth: 400 }}>
+            
+            {/* 🔥 HOME BUTTON */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginBottom: "20px",
+              }}
+            >
+              <Link href="/homepage">
+                <Button
+                  color="grey"
+                  basic
+                  icon
+                  labelPosition="left"
+                >
+                  <Icon name="home" />
+                  Home
+                </Button>
+              </Link>
+            </div>
+
             <Form size="large">
               <Segment stacked>
                 <Header

@@ -19,14 +19,14 @@ class HomepageLayout extends Component {
       <div className="hero-section">
         <Menu secondary size="large" className="menu">
           <Container>
-            <h1 className="logo">BlockVotes</h1>
+            <h1 className="logo">Election Voting</h1>
           </Container>
         </Menu>
 
         <Container text textAlign="center" className="hero-content">
           <Header
             as="h1"
-            content="A blockchain-based E-voting system, built with love."
+            content="Blockchain based Secure E voting with Homomorphic Encryption."
             style={{
               fontSize: "4rem",
               fontWeight: "normal",

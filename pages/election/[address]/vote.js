@@ -4,8 +4,8 @@ import Layout from '../../../components/Layout';
 import web3 from '../../../Ethereum/web3';
 import Election from '../../../Ethereum/election';
 import Cookies from 'js-cookie';
-import {Router} from '../../routes';
-import {Helmet} from 'react-helmet';
+import Router from 'next/router';
+import Head  from 'next/head';
 
 class VotingList extends Component {
 
@@ -48,10 +48,7 @@ class VotingList extends Component {
           Cookies.remove('address');
           Cookies.remove('voter_email');
           alert("Logging out.");
-          import { useRouter } from 'next/router'
-
-const router = useRouter()
-router.push('/homepage');
+          Router.push('/homepage');
     }
 
     async componentDidMount() {
@@ -92,7 +89,7 @@ router.push('/homepage');
         } catch(err) {
             console.log(err.message);
             alert("Session expired. Redirecting you to login page...");
-            Router.pushRoute('/voter_login');
+            Router.push('/voter_login');
         }
     }
     getElectionDetails = () => {
@@ -130,10 +127,10 @@ router.push('/homepage');
     render() {
       return (
         <div> 
-            <Helmet>
+            <Head>
             <title>Vote</title>
             <link rel="shortcut icon" type="image/x-icon" href="../../public/logo3.png" />
-          </Helmet>
+          </Head>
           <Grid>
             <Grid.Row>
               <Grid.Column width={2}>

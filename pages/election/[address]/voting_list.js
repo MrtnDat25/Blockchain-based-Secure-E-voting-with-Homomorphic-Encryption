@@ -61,7 +61,9 @@ async componentDidMount() {
       body: 'election_address=' + add
     });
 
-    const data = await response.json();
+    const text = await response.text();
+
+    console.log(text);
 
     let voters = [];
 

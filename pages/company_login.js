@@ -20,7 +20,7 @@ import Link from "next/link";
 
 
 class DividerExampleVerticalForm extends Component {
-  state = { visible: true, email: "" };
+  state = { visible: false, email: "" };
 
   toggleVisibility = () =>
     this.setState({ visible: !this.state.visible });
@@ -29,12 +29,19 @@ class DividerExampleVerticalForm extends Component {
     <div className="login-form">
       <style jsx>{`
         .login-form {
-          width: 100vw;
-          height: 100vh;
-          position: absolute;
-          background: url("/blockchain.jpg") no-repeat;
-          z-index: -1;
-        }
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("/blockchain.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #000; /* nền đen phần dư */
+  z-index: -1;
+}
+}
       `}</style>
     </div>
   );
@@ -111,6 +118,10 @@ signin = async () => {
     }
 
     const address = summary[0];
+    Cookies.set("address", address, {
+      expires: 7,
+      path: "/",
+    });
 
     // 4. IMPORTANT: DO NOT RELY ON COOKIE
     Cookies.set("company_email", email, {
@@ -130,36 +141,41 @@ signin = async () => {
   }
 };
 
-  render() {
-    const { visible } = this.state;
+render() {
+  const { visible } = this.state;
 
-    return (
-      <div>
-        <Head>
-          <title>Company Login</title>
-        </Head>
+  return (
+    <div>
+      <Head>
+        <title>Company Login</title>
+      </Head>
 
-        <link
-          rel="stylesheet"
-          href="//cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css"
-        />
+      <link
+        rel="stylesheet"
+        href="//cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css"
+      />
 
-        {this.returnBackImage()}
+      {this.returnBackImage()}
 
-        <Button.Group style={{ marginLeft: "43%" }}>
-          <Button
-            primary
-            content={visible ? "Sign in" : "Sign up"}
-            onClick={this.toggleVisibility}
-          />
-        </Button.Group>
-
-        <Divider />
-
-        <Grid>
-          <Grid.Row>
-            <Grid.Column width={5} style={{ marginLeft: "33%", marginTop: "10%" }}>
-              <div style={{ marginBottom: "20px", textAlign: "center" }}>
+      <Grid>
+        <Grid.Row>
+          <Grid.Column
+            width={5}
+            style={{
+              marginLeft: "33%",
+              marginTop: "8%",
+            }}
+          >
+            {/* 🔥 HOME + SIGN IN/SIGN UP */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: "20px",
+                marginBottom: "20px",
+              }}
+            >
               <Link href="/homepage">
                 <Button
                   color="grey"
@@ -171,64 +187,78 @@ signin = async () => {
                   Home
                 </Button>
               </Link>
+
+              <Button
+                primary
+                content={visible ? "Sign in" : "Sign up"}
+                onClick={this.toggleVisibility}
+              />
             </div>
-              <Segment placeholder>
-                {/* 🔥 SIGN IN */}
-                <Transition visible={!visible} animation="scale" duration={300}>
-                  <Form size="large">
-                    <h3>Sign in</h3>
 
-                    <Form.Input
-                      id="signin_email"
-                      placeholder="Email"
-                    />
+            <Segment placeholder>
+              {/* 🔥 SIGN IN */}
+              <Transition
+                visible={!visible}
+                animation="scale"
+                duration={300}
+              >
+                <Form size="large">
+                  <h3>Sign in</h3>
 
-                    <Form.Input
-                      id="signin_password"
-                      type="password"
-                      placeholder="Password"
-                    />
+                  <Form.Input
+                    id="signin_email"
+                    placeholder="Email"
+                  />
 
-                    <Button fluid color="blue" onClick={this.signin}>
-                      Submit
-                    </Button>
-                  </Form>
-                </Transition>
+                  <Form.Input
+                    id="signin_password"
+                    type="password"
+                    placeholder="Password"
+                  />
 
-                {/* 🔥 SIGN UP */}
-                <Transition visible={visible} animation="scale" duration={300}>
-                  <Form size="large">
-                    <h3>Sign up</h3>
+                  <Button fluid color="blue" onClick={this.signin}>
+                    Submit
+                  </Button>
+                </Form>
+              </Transition>
 
-                    <Form.Input
-                      id="signup_email"
-                      placeholder="Email"
-                    />
+              {/* 🔥 SIGN UP */}
+              <Transition
+                visible={visible}
+                animation="scale"
+                duration={300}
+              >
+                <Form size="large">
+                  <h3>Sign up</h3>
 
-                    <Form.Input
-                      id="signup_password"
-                      type="password"
-                      placeholder="Password"
-                    />
+                  <Form.Input
+                    id="signup_email"
+                    placeholder="Email"
+                  />
 
-                    <Form.Input
-                      id="signup_repeat_password"
-                      type="password"
-                      placeholder="Repeat Password"
-                    />
+                  <Form.Input
+                    id="signup_password"
+                    type="password"
+                    placeholder="Password"
+                  />
 
-                    <Button fluid color="blue" onClick={this.signup}>
-                      Submit
-                    </Button>
-                  </Form>
-                </Transition>
-              </Segment>
-            </Grid.Column>
-          </Grid.Row>
-        </Grid>
-      </div>
-    );
-  }
-}
+                  <Form.Input
+                    id="signup_repeat_password"
+                    type="password"
+                    placeholder="Repeat Password"
+                  />
+
+                  <Button fluid color="blue" onClick={this.signup}>
+                    Submit
+                  </Button>
+                </Form>
+              </Transition>
+            </Segment>
+          </Grid.Column>
+        </Grid.Row>
+      </Grid>
+    </div>
+  );
+}}
 
 export default DividerExampleVerticalForm;
