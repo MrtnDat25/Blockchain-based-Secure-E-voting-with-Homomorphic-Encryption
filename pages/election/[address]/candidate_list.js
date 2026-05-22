@@ -301,7 +301,7 @@ signOut = () => {
                 </Grid.Column>
                 <Grid.Column style={{ float: 'right', width: '30%' }}>
                 <Container style={{marginLeft:'50px'}}>                      
-                <Header as='h2' color='black' textAlign='center'>                 
+                <Header as='h2' color='black' style={{ textAlign: 'center' }}>                 
                         Add Candidate
                        </Header>
                        <Card style={{width: '100%'}}>      
@@ -313,7 +313,7 @@ signOut = () => {
                         label='Name:'
                         placeholder='Enter your name.'
                         onChange={event => this.setState({ cand_name: event.target.value })}
-                        textAlign='center'
+                        style={{ textAlign: 'center' }}
                        
                     />        
                         

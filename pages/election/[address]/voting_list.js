@@ -19,101 +19,60 @@ class VotingList extends Component {
         }
 
 async componentDidMount() {
-
-  let add = this.props.router?.query?.address;
-
-  // NEXT ROUTER LOAD CHẬM
-  if (!add) {
-    add = window.location.pathname.split("/")[2];
-  }
-
-  // fallback cookie
-  if (!add) {
-    add = Cookies.get("address");
-  }
-
-  console.log("ADDRESS:", add);
-
-  if (!add || add === "undefined") {
-    return;
-  }
-
   try {
+    let add = this.props.router?.query?.address;
+
+    if (!add) {
+      add = window.location.pathname.split("/")[2];
+    }
+
+    if (!add) {
+      add = Cookies.get("address");
+    }
+
+    if (!add) return;
 
     const election = Election(add);
 
-    const summary = await election.methods
-      .getElectionDetails()
-      .call();
+    const summary = await election.methods.getElectionDetails().call();
 
-    this.setState({
-      election_address: add,
-      election_name: summary[0],
-      election_description: summary[1]
+    this.setState(
+      {
+        election_address: add,
+        election_name: summary[0],
+        election_description: summary[1],
+      },
+      () => {
+        this.loadVoters();
+      }
+    );
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+loadVoters = async () => {
+  try {
+    const body = new URLSearchParams({
+      election_address: this.state.election_address,
     });
 
-    // API
-      const response = await fetch("/voter/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: params,
-      });
+    const res = await fetch("/api/voter", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: body.toString(),
+    });
 
-      const text = await response.text();
-      console.log("RAW:", text);
+    const data = await res.json();
 
-      const data = JSON.parse(text);
+    let voters = data?.data?.voters || [];
 
-    let voters = [];
-
-    if (data.status === "success") {
-      voters = data.data.voters;
-    }
-
-    const items = voters.map(voter => ({
+    const items = voters.map((voter) => ({
       header: voter.email,
       description: (
         <div>
-
-          <Modal
-            size="tiny"
-            trigger={
-              <Button basic color="green">
-                Edit
-              </Button>
-            }
-            closeIcon
-          >
-
-            <Modal.Header>
-              Edit E-mail ID
-            </Modal.Header>
-
-            <Modal.Content>
-              <Input
-                id={`EmailVal${voter.id}`}
-                placeholder='E-mail ID'
-              />
-            </Modal.Content>
-
-            <Modal.Actions>
-              <Button
-                positive
-                onClick={() => this.updateEmail(voter.id)}
-              >
-                Yes
-              </Button>
-
-              <Button negative>
-                No
-              </Button>
-
-            </Modal.Actions>
-
-          </Modal>
-
           <Button
             negative
             basic
@@ -121,23 +80,17 @@ async componentDidMount() {
           >
             Delete
           </Button>
-
         </div>
-      )
+      ),
     }));
 
-    this.setState({
-      item: items
-    });
-
+    this.setState({ item: items });
   } catch (err) {
-
-    console.log(err);
-
-    alert("Cannot load election");
-
+    console.error(err);
   }
-}
+};
+
+
 
       updateEmail = async (id) => {
       const email = document.getElementById(`EmailVal${id}`).value;
@@ -191,12 +144,11 @@ async componentDidMount() {
           pathname: "/election/[address]/company_dashboard",
           query : { address: this.props.router.query.address }
         }}>
-        <a>
           <Menu.Item style={{ color: 'grey', fontColor: 'grey' }}>
             <Icon name='dashboard'/>
             Dashboard
           </Menu.Item>
-          </a>
+          
           </Link>
           <Link href={
             {
@@ -243,73 +195,50 @@ signOut = () => {
 };
 
 register = async (event) => {
-
   event.preventDefault();
-
-  this.setState({
-    loading: true
-  });
+  this.setState({ loading: true });
 
   try {
+    const email = document
+      .getElementById("register_voter_email")
+      ?.value?.trim();
 
-    const email = document.getElementById(
-      "register_voter_email"
-    ).value;
+    const add = this.state.election_address;
 
-    const add =
-      this.state.election_address ||
-      this.props.router.query.address;
+    if (!email || !add) {
+      alert("Missing email or election address");
+      return;
+    }
 
-    console.log("EMAIL:", email);
-    console.log("ADDRESS:", add);
+    const body = new URLSearchParams({
+      email,
+      election_address: add,
+      election_name: this.state.election_name,
+      election_description: this.state.election_description,
+    });
 
-    const response = await fetch(
-      "/voter/register",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/x-www-form-urlencoded"
-        },
-
-        body:
-          `email=${email}` +
-          `&election_address=${add}` +
-          `&election_name=${this.state.election_name}` +
-          `&election_description=${this.state.election_description}`
-      }
-    );
-
-    console.log("STATUS:", response.status);
+    const response = await fetch("/api/voter/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: body.toString(),
+    });
 
     const data = await response.json();
 
-    console.log("DATA:", data);
-
-    if (response.ok) {
-
+    if (response.ok && data.status === "success") {
       alert(data.message);
-
-      window.location.reload();
-
+      this.loadVoters(); // reload list
     } else {
-
       alert(data.message || "Register failed");
-
     }
-
   } catch (err) {
-
-    console.log("REGISTER ERROR:", err);
-
-    alert(err.message);
-
+    console.error(err);
+    alert("Error register");
+  } finally {
+    this.setState({ loading: false });
   }
-
-  this.setState({
-    loading: false
-  });
 };
 	
   render() {      
@@ -332,11 +261,7 @@ register = async (event) => {
                   <Header as='h2' color='black'>
                     Voter List
               </Header>
-                  <Container>                      
-                      <table>
-                      {this.renderTable()}
-                      </table>                                        
-                  </Container>
+
                 </Grid.Column>
                 <Grid.Column style={{ float: 'right', width: '30%' }}>
                   <Container style={{}}>
@@ -352,7 +277,7 @@ register = async (event) => {
                           id='register_voter_email'
                           label='Email:'
                           placeholder='Enter your email.'
-                          textAlign='center'
+                          style={{ textAlign: 'center' }}
                         />
 
                         <br /><br />
