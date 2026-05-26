@@ -7,6 +7,10 @@ import Head from 'next/head';
 import Election from '../../../Ethereum/election';
 import Router from 'next/router';
 import { withRouter } from "next/router";
+
+
+import * as XLSX from "xlsx"
+import axios from "axios";
 class VotingList extends Component { 
 
         state = {
@@ -14,6 +18,7 @@ class VotingList extends Component {
           election_address: Cookies.get('address'),
           election_name: '',
           election_description: '',
+          excelLoading: false,
           voters: [],
           item: []
         }
@@ -69,22 +74,29 @@ loadVoters = async () => {
 
     let voters = data?.data?.voters || [];
 
-    const items = voters.map((voter) => ({
-      header: voter.email,
-      description: (
-        <div>
-          <Button
-            negative
-            basic
-            onClick={() => this.deleteEmail(voter.id)}
-          >
-            Delete
-          </Button>
-        </div>
-      ),
-    }));
+    const items = voters.map((voter) => {
 
-    this.setState({ item: items });
+      console.log(voter);
+
+      return {
+        header: voter.email,
+        description: (
+          <div>
+            <Button
+              negative
+              basic
+              onClick={() => this.deleteEmail(voter.id)}
+            >
+              Delete
+            </Button>
+          </div>
+        ),
+      };
+    });
+
+    this.setState({
+      voters, 
+      item: items });
   } catch (err) {
     console.error(err);
   }
@@ -100,10 +112,11 @@ loadVoters = async () => {
 
       http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
-      http.onreadystatechange = function () {
+      http.onreadystatechange = () => {
         if (http.readyState === 4 && http.status === 200) {
           const res = JSON.parse(http.responseText);
           alert(res.message);
+          this.loadVoters()
         }
       };
 
@@ -115,19 +128,33 @@ loadVoters = async () => {
       http.send(params);
     };
 
-    deleteEmail = async (id) => {
-    const http = new XMLHttpRequest();
-    http.open("DELETE", `/voter/${id}`, true);
+ deleteEmail = async (id) => {
+  try {
 
-    http.onreadystatechange = function () {
-      if (http.readyState === 4 && http.status === 200) {
-        const res = JSON.parse(http.responseText);
-        alert(res.message);
-      }
-    };
+    const response = await fetch(`/api/voter/${id}`, {
+      method: "DELETE",
+    });
 
-    http.send();
-  };
+    const data = await response.json();
+
+    if (response.ok) {
+
+      alert(data.message);
+
+      this.loadVoters();
+
+    } else {
+
+      alert(data.message || "Delete failed");
+    }
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert("Server error");
+  }
+};
 
     renderTable = () => {
         return (<Card.Group items={this.state.item}/>)
@@ -186,60 +213,172 @@ loadVoters = async () => {
         </Sidebar>
       </Sidebar.Pushable>
     )
-signOut = () => {
-  Cookies.remove('address');
-  Cookies.remove('company_email');
-  Cookies.remove('company_id');
-  alert("Logging out....")
-  Router.push('/homepage');
-};
+      signOut = () => {
+        Cookies.remove('address');
+        Cookies.remove('company_email');
+        Cookies.remove('companyid');
+        alert("Logging out....")
+        Router.push('/homepage');
+      };
 
-register = async (event) => {
-  event.preventDefault();
-  this.setState({ loading: true });
+      register = async (event) => {
+        event.preventDefault();
+        this.setState({ loading: true });
+
+        try {
+          const email = document
+            .getElementById("register_voter_email")
+            ?.value?.trim();
+
+          const add = this.state.election_address;
+
+          if (!email || !add) {
+            alert("Missing email or election address");
+            return;
+          }
+
+          const body = new URLSearchParams({
+            email,
+            election_address: add,
+            election_name: this.state.election_name,
+            election_description: this.state.election_description,
+          });
+
+          const response = await fetch("/api/voter/register", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: body.toString(),
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.status === "success") {
+            alert(data.message);
+            this.loadVoters(); // reload list
+          } else {
+            alert(data.message || "Register failed");
+          }
+        } catch (err) {
+          console.error(err);
+          alert(err.message);
+          // alert("Error register");
+        } finally {
+          this.setState({ loading: false });
+        }
+      };
+
+      handleExcelUpload = async (event) => {
+
+        const file = event.target.files[0];
+
+        if (!file) return;
+
+        this.setState({ excelLoading: true });
+
+        try {
+
+          const data = await file.arrayBuffer();
+
+          const workbook = XLSX.read(data);
+
+          const sheetName = workbook.SheetNames[0];
+
+          const worksheet = workbook.Sheets[sheetName];
+
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+          console.log(jsonData);
+
+          for (const row of jsonData) {
+
+            const email = row.email || row.Email || row.EMAIL;
+
+            if (!email) continue;
+
+            const body = new URLSearchParams({
+              email: email,
+              election_address: this.state.election_address,
+              election_name: this.state.election_name,
+              election_description: this.state.election_description,
+            });
+
+            const response = await fetch("/api/voter/register", {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/x-www-form-urlencoded",
+              },
+              body: body.toString(),
+            });
+
+            const result = await response.json();
+
+            console.log(result);
+          }
+
+          alert("Import voters successfully!");
+
+          this.loadVoters();
+
+        } catch (err) {
+
+          console.log(err);
+
+          alert("Excel import failed");
+
+        }
+
+        this.setState({ excelLoading: false });
+      };
+
+
+      handleExcelImport = async (event) => {
+
+  const file = event.target.files[0];
+
+  if (!file) return;
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+
+  formData.append(
+    "election_address",
+    this.state.election_address
+  );
 
   try {
-    const email = document
-      .getElementById("register_voter_email")
-      ?.value?.trim();
 
-    const add = this.state.election_address;
-
-    if (!email || !add) {
-      alert("Missing email or election address");
-      return;
-    }
-
-    const body = new URLSearchParams({
-      email,
-      election_address: add,
-      election_name: this.state.election_name,
-      election_description: this.state.election_description,
+    this.setState({
+      loading: true,
     });
 
-    const response = await fetch("/api/voter/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: body.toString(),
-    });
+    const response = await axios.post(
+      "/api/voter/import",
+      formData
+    );
 
-    const data = await response.json();
+    alert(
+      `Imported ${response.data.inserted} voters`
+    );
 
-    if (response.ok && data.status === "success") {
-      alert(data.message);
-      this.loadVoters(); // reload list
-    } else {
-      alert(data.message || "Register failed");
-    }
+    this.loadVoters();
+
   } catch (err) {
-    console.error(err);
-    alert("Error register");
-  } finally {
-    this.setState({ loading: false });
+
+    console.log(err);
+
+    alert("Import failed");
+
   }
+
+  this.setState({
+    loading: false,
+  });
 };
+
 	
   render() {      
     return (
@@ -261,6 +400,7 @@ register = async (event) => {
                   <Header as='h2' color='black'>
                     Voter List
               </Header>
+                  {this.renderTable()}
 
                 </Grid.Column>
                 <Grid.Column style={{ float: 'right', width: '30%' }}>
@@ -291,6 +431,15 @@ register = async (event) => {
                         >
                           Register
                         </Button>
+                        <br />
+
+                        <p>Import Excel</p>
+
+                        <input
+                          type="file"
+                          accept=".xlsx,.xls,.csv"
+                          onChange={this.handleExcelImport}
+                        />
                       </Form>
                     </Card>
                   </Container>

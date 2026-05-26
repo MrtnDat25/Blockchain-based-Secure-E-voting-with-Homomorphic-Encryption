@@ -29,19 +29,19 @@ class DividerExampleVerticalForm extends Component {
     <div className="login-form">
       <style jsx>{`
         .login-form {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("/blockchain.jpg");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: #000; /* nền đen phần dư */
-  z-index: -1;
-}
-}
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-image: url("/blockchain.jpg");
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          background-color: #000; /* nền đen phần dư */
+          z-index: -1;
+        }
+          }
       `}</style>
     </div>
   );

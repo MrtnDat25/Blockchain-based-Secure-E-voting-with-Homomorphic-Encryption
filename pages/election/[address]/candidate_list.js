@@ -7,6 +7,8 @@ import Link from 'next/link';
 import Router from 'next/router';
 import Election from '../../../Ethereum/election';
 
+import * as XLSX from "xlsx"
+
 import Head from "next/head";
 
 import { uploadToPinata } from "../../../pinata";
@@ -24,56 +26,83 @@ class VotingList extends Component {
       file: null,
       buffer: null,
       pinataHash: null,
+      excelLoading: false,
       loading: false
     }
 
-    async componentDidMount() {
-        try {
-            const add = Cookies.get('address');
-            if (!add) {
-              Router.push("/company_login");
-              return;
-            }
-            const election = Election(add);
-            const summary = await election.methods.getElectionDetails().call();
-            this.setState({
-                election_name: summary[0],
-                election_description: summary[1]
-            });            
-            const c = await election.methods.getNumOfCandidates().call();
-            if(c == 0)
-                alert("Register a candidate first!");
+async componentDidMount() {
+  try {
 
-            let candidates = [];
-            for(let i=0 ; i<c; i++) {
-                candidates.push(await election.methods.getCandidate(i).call());
-            }
-        let i=-1;
-        const items = candidates.map(candidate => {
-            i++;
-            console.log(candidate[2]);
-            return {
-              header: candidate[0],
-              description: candidate[1],
-              image: (
-                  <Image src={`https://gateway.pinata.cloud/ipfs/${candidate[2]}`} />
-                ),
-              extra: (
-                  <div>
-                    <Icon name='pie graph' iconPostion='left'/>  
-                    {candidate[3].toString()}  
-                </div>
-              ) 
-            };
-            
-        });
-        this.setState({item: items}); 
-        } catch(err) {
-            console.log(err.message);
-            alert("Redirecting you to login page...");
-            Router.push('/company_login');
-        }
+    const add = Cookies.get("address");
+
+    if (!add) {
+      Router.push("/company_login");
+      return;
     }
+
+    const election = Election(add);
+
+    // load election info
+    const summary = await election.methods
+      .getElectionDetails()
+      .call();
+
+    // load candidates count
+    const c = await election.methods
+      .getNumOfCandidates()
+      .call();
+
+    let candidates = [];
+
+    for (let i = 0; i < c; i++) {
+
+      const candidate = await election.methods
+        .getCandidate(i)
+        .call();
+
+      candidates.push(candidate);
+    }
+
+    // build UI items
+    const items = candidates.map((candidate) => {
+
+      return {
+        header: candidate[0],
+
+        description: candidate[1],
+
+        image: (
+          <Image
+            src={`https://gateway.pinata.cloud/ipfs/${candidate[2]}`}
+          />
+        ),
+
+        extra: (
+          <div>
+            <Icon name="pie graph" />
+            {candidate[3].toString()}
+          </div>
+        ),
+      };
+    });
+
+    // update state
+    this.setState({
+      election_name: summary[0],
+      election_description: summary[1],
+      candidates: candidates,
+      item: items,
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    alert("Redirecting you to login page...");
+
+    Router.push("/company_login");
+  }
+}
     getElectionDetails = () => {
         const {
             election_name,
@@ -122,6 +151,52 @@ class VotingList extends Component {
       };
     };
 
+loadCandidates = async () => {
+  try {
+    const add = Cookies.get("address");
+
+    const election = Election(add);
+
+    const c = await election.methods.getNumOfCandidates().call();
+
+    let candidates = [];
+
+    for (let i = 0; i < c; i++) {
+      candidates.push(
+        await election.methods.getCandidate(i).call()
+      );
+    }
+
+    const items = candidates.map((candidate) => {
+      return {
+        header: candidate[0],
+        description: candidate[1],
+        image: (
+          <Image
+            src={`https://gateway.pinata.cloud/ipfs/${candidate[2]}`}
+          />
+        ),
+        extra: (
+          <div>
+            <Icon name="pie graph" />
+            {candidate[3].toString()}
+          </div>
+        ),
+      };
+    });
+
+    this.setState({
+      candidates,
+      item: items,
+    });
+
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+
+
     
 onSubmit = async (event) => {
   event.preventDefault();
@@ -168,7 +243,7 @@ onSubmit = async (event) => {
       });
 
     alert("Added successfully!");
-
+    await this.componentDidMount();
     // 5. backend call
     const email = document.getElementById("email").value;
 
