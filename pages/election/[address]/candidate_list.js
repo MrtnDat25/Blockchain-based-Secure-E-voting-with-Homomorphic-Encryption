@@ -325,6 +325,20 @@ onSubmit = async (event) => {
             </Menu.Item>
             </a>
             </Link>
+
+            <Link
+              href={{
+                pathname: "/election/[address]/person_infor",
+                query: { address: Cookies.get("address") },
+              }}
+            >
+              <a>
+                <Menu.Item as="a" style={{ color: "grey" }}>
+                  <Icon name="id card" />
+                  Person Information
+                </Menu.Item>
+              </a>
+            </Link>
             <hr/>
             <Button onClick={this.signOut} style={{backgroundColor: 'white'}}>
             <Menu.Item as='a' style={{ color: 'grey' }}>

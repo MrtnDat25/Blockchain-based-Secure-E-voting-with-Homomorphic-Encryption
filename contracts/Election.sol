@@ -1,22 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-
 contract ElectionFactory {
-    
-    struct ElectionDet {
+
+    struct Company {
         address deployedAddress;
-        string el_n;
-        string el_d;
+        string email;
+        string password;
+        string election_name;
+        string election_description;
     }
-    
-    mapping(string=>ElectionDet) companyEmail;
-    
+
+    mapping(string => Company) companies;
+
     function createElection(
         string memory email,
+        string memory password,
         string memory election_name,
         string memory election_description
     ) public {
+
+        require(
+            companies[email].deployedAddress == address(0),
+            "Company already exists"
+        );
 
         Election newElection = new Election(
             msg.sender,
@@ -24,31 +31,102 @@ contract ElectionFactory {
             election_description
         );
 
-        companyEmail[email].deployedAddress = address(newElection);
-        companyEmail[email].el_n = election_name;
-        companyEmail[email].el_d = election_description;
+        companies[email] = Company({
+            deployedAddress: address(newElection),
+            email: email,
+            password: password,
+            election_name: election_name,
+            election_description: election_description
+        });
     }
-    
-    function getDeployedElection(string memory email)
+
+    function loginCompany(
+        string memory email,
+        string memory password
+    )
         public
         view
-        returns (address, string memory, string memory)
+        returns (
+            bool,
+            address,
+            string memory,
+            string memory
+        )
     {
-        address val = companyEmail[email].deployedAddress;
+        Company memory c = companies[email];
 
-        if (val == address(0)) {
+        if (
+            c.deployedAddress == address(0)
+        ) {
             return (
+                false,
                 address(0),
                 "",
-                "Create an election."
-            );
-        } else {
-            return (
-                companyEmail[email].deployedAddress,
-                companyEmail[email].el_n,
-                companyEmail[email].el_d
+                ""
             );
         }
+
+        if (
+            keccak256(bytes(c.password))
+            !=
+            keccak256(bytes(password))
+        ) {
+            return (
+                false,
+                address(0),
+                "",
+                ""
+            );
+        }
+
+        return (
+            true,
+            c.deployedAddress,
+            c.election_name,
+            c.election_description
+        );
+    }
+
+    function updatePassword(
+        string memory email,
+        string memory oldPassword,
+        string memory newPassword
+    ) public {
+
+        Company storage c = companies[email];
+
+        require(
+            c.deployedAddress != address(0),
+            "Company not found"
+        );
+
+        require(
+            keccak256(bytes(c.password)) ==
+            keccak256(bytes(oldPassword)),
+            "Wrong old password"
+        );
+
+        c.password = newPassword;
+    }
+
+    function getCompany(
+        string memory email
+    )
+        public
+        view
+        returns (
+            address,
+            string memory,
+            string memory
+        )
+    {
+        Company memory c = companies[email];
+
+        return (
+            c.deployedAddress,
+            c.election_name,
+            c.election_description
+        );
     }
 }
 

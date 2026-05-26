@@ -18,6 +18,7 @@ import Head from "next/head";
 import Cookies from "js-cookie";
 import Link from "next/link";
 
+import sha256 from "crypto-js/sha256";
 
 class DividerExampleVerticalForm extends Component {
   state = { visible: false, email: "" };
@@ -70,8 +71,15 @@ class DividerExampleVerticalForm extends Component {
     const accounts = await web3.eth.getAccounts();
 
     await Election_Factory.methods
-      .createElection(email, "Election", "Created from UI")
-      .send({ from: accounts[0] });
+    .createElection(
+      email,
+      password,
+      "Election",
+      "Created from UI"
+    )
+    .send({
+      from: accounts[0],
+    });
 
     alert("Election created!");
 
@@ -86,13 +94,13 @@ class DividerExampleVerticalForm extends Component {
 signin = async () => {
   try {
     const email = document.getElementById("signin_email").value;
+    const password = document.getElementById("signin_password").value;
 
-    if (!email) {
-      alert("Please enter email");
+    if (!email || !password) {
+      alert("Please enter email and password");
       return;
     }
 
-    // 1. connect wallet
     await window.ethereum.request({
       method: "eth_requestAccounts",
     });
@@ -104,40 +112,53 @@ signin = async () => {
       return;
     }
 
-    // 2. get election
-    const summary = await Election_Factory.methods
-      .getDeployedElection(email)
+    const result = await Election_Factory.methods
+      .loginCompany(email, password)
       .call({ from: accounts[0] });
 
-    console.log("SUMMARY:", summary);
+    console.log("LOGIN RESULT:", result);
 
-    // 3. validate result
-    if (!summary || !summary[0]) {
-      alert("Election not found");
+    // ✅ FIX: destructure like your snippet
+    const success = result[0];
+    const address = result[1];
+
+    if (!success) {
+      alert("Wrong email or password");
       return;
     }
 
-    const address = summary[0];
+    if (!address || address === "0x0000000000000000000000000000000000000000") {
+      alert("Invalid company address");
+      return;
+    }
+
     Cookies.set("address", address, {
       expires: 7,
       path: "/",
     });
 
-    // 4. IMPORTANT: DO NOT RELY ON COOKIE
     Cookies.set("company_email", email, {
       expires: 7,
       path: "/",
     });
 
-    // 5. SAFE ROUTE PUSH
     Router.push({
       pathname: "/election/[address]/company_dashboard",
       query: { address },
     });
 
   } catch (err) {
-    console.log("SIGNIN ERROR:", err);
-    alert(err?.message || "Signin failed");
+    console.log(err);
+
+    let message = "Something went wrong";
+
+    if (err?.message?.includes("Wrong password")) {
+      message = "Wrong password";
+    } else if (err?.message?.includes("Company not found")) {
+      message = "Company not found";
+    }
+
+    alert(message);
   }
 };
 

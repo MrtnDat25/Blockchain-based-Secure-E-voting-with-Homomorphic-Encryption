@@ -1,29 +1,117 @@
-pragma solidity ^0.4.25;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 
-contract ElectionFact {
-    
-    struct ElectionDet {
+contract ElectionFactory {
+
+    struct Company {
         address deployedAddress;
-        string el_n;
-        string el_d;
+        string email;
+        string password;
+        string election_name;
+        string election_description;
     }
-    
-    mapping(string=>ElectionDet) companyEmail;
-    
-    function createElection(string memory email,string memory election_name, string memory election_description) public{
-        address newElection = new Election(msg.sender , election_name, election_description);
-        
-        companyEmail[email].deployedAddress = newElection;
-        companyEmail[email].el_n = election_name;
-        companyEmail[email].el_d = election_description;
+
+    mapping(string => Company) companies;
+
+    function createElection(
+        string memory email,
+        string memory password,
+        string memory election_name,
+        string memory election_description
+    ) public {
+
+        require(
+            companies[email].deployedAddress == address(0),
+            "Company already exists"
+        );
+
+        Election newElection = new Election(
+            msg.sender,
+            election_name,
+            election_description
+        );
+
+        companies[email] = Company({
+            deployedAddress: address(newElection),
+            email: email,
+            password: password,
+            election_name: election_name,
+            election_description: election_description
+        });
     }
-    
-    function getDeployedElection(string memory email) public view returns (address,string,string) {
-        address val =  companyEmail[email].deployedAddress;
-        if(val == 0) 
-            return (0,"","Create an election.");
-        else
-            return (companyEmail[email].deployedAddress,companyEmail[email].el_n,companyEmail[email].el_d);
+
+    function loginCompany(
+        string memory email,
+        string memory password
+    )
+        public
+        view
+        returns (
+            address,
+            string memory,
+            string memory
+        )
+    {
+        Company memory c = companies[email];
+
+        require(
+            c.deployedAddress != address(0),
+            "Company not found"
+        );
+
+        require(
+            keccak256(bytes(c.password)) ==
+            keccak256(bytes(password)),
+            "Wrong password"
+        );
+
+        return (
+            c.deployedAddress,
+            c.election_name,
+            c.election_description
+        );
+    }
+
+    function updatePassword(
+        string memory email,
+        string memory oldPassword,
+        string memory newPassword
+    ) public {
+
+        Company storage c = companies[email];
+
+        require(
+            c.deployedAddress != address(0),
+            "Company not found"
+        );
+
+        require(
+            keccak256(bytes(c.password)) ==
+            keccak256(bytes(oldPassword)),
+            "Wrong old password"
+        );
+
+        c.password = newPassword;
+    }
+
+    function getCompany(
+        string memory email
+    )
+        public
+        view
+        returns (
+            address,
+            string memory,
+            string memory
+        )
+    {
+        Company memory c = companies[email];
+
+        return (
+            c.deployedAddress,
+            c.election_name,
+            c.election_description
+        );
     }
 }
 
@@ -36,7 +124,7 @@ contract Election {
     bool status;
     
     //election_authority's address taken when it deploys the contract
-    constructor(address authority , string name, string description) public {
+    constructor(address authority, string memory name, string memory description) {
         election_authority = authority;
         election_name = name;
         election_description = description;
@@ -89,7 +177,7 @@ contract Election {
     }
     //function to vote and check for double voting
 
-    function vote(uint8 candidateID,string e) public {
+    function vote(uint8 candidateID, string memory e) public {
 
         //if false the vote will be registered
         require(!voters[e].voted, "Error:You cannot double vote");
@@ -121,18 +209,19 @@ contract Election {
     //function to return winner candidate information
 
     function winnerCandidate() public view owner returns (uint8) {
+        uint8 winner = 0;
         uint8 largestVotes = candidates[0].voteCount;
-        uint8 candidateID;
-        for(uint8 i = 1;i<numCandidates;i++) {
-            if(largestVotes < candidates[i].voteCount) {
+
+        for (uint8 i = 1; i < numCandidates; i++) {
+            if (candidates[i].voteCount > largestVotes) {
                 largestVotes = candidates[i].voteCount;
-                candidateID = i;
+                winner = i;
             }
         }
-        return (candidateID);
+        return winner;
     }
     
-    function getElectionDetails() public view returns(string, string) {
+    function getElectionDetails() public view returns(string memory, string memory) {
         return (election_name,election_description);    
     }
 }

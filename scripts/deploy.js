@@ -1,18 +1,17 @@
 const hre = require("hardhat");
 
 async function main() {
-  const ElectionFactory = await hre.ethers.getContractFactory("ElectionFactory");
+  const accounts = await hre.ethers.getSigners();
 
-  const factory = await ElectionFactory.deploy();
+  console.log("Deploying from:", accounts[0].address);
+
+  const Factory = await hre.ethers.getContractFactory("ElectionFactory");
+
+  const factory = await Factory.deploy();
 
   await factory.waitForDeployment();
 
-  console.log("Contract deployed to:", await factory.getAddress());
+  console.log("Contract:", await factory.getAddress());
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+main();
