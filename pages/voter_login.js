@@ -33,59 +33,132 @@ class LoginForm extends Component {
     </div>
   );
 
-  signin = async () => {
-    try {
-      this.setState({ loading: true });
+  signin = async (event) => {
 
-      const email = document.getElementById("signin_email").value;
-      const password = document.getElementById("signin_password").value;
+      event.preventDefault();
 
-      if (!email || !password) {
-        alert("Please enter email and password");
-        return;
+      try {
+
+        this.setState({
+          loading: true,
+        });
+
+        const email =
+          document
+            .getElementById(
+              "signin_email"
+            )
+            .value
+            .trim()
+            .toLowerCase();
+
+        const password =
+          document
+            .getElementById(
+              "signin_password"
+            )
+            .value;
+        const electionInput =
+          document.getElementById(
+            "signin_election"
+          );
+
+        const election_address =
+          electionInput
+            ? electionInput.value
+            : "";
+        if (!email || !password) {
+
+          alert(
+            "Please enter email and password"
+          );
+
+          return;
+        }
+
+        const response = await fetch(
+          "/api/voter/authenticate",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              email,
+              password,
+              election_address,
+            }),
+          }
+        );
+
+        const data =
+          await response.json();
+
+        console.log(
+          "LOGIN RESPONSE:",
+          data
+        );
+
+        if (
+          response.ok &&
+          data.status === "success"
+        ) {
+
+          Cookies.set(
+            "voter_email",
+            email,
+            {
+              expires: 7,
+              path: "/",
+            }
+          );
+
+          Cookies.set(
+            "address",
+            data.data.election_address,
+            {
+              expires: 7,
+              path: "/",
+            }
+          );
+
+          alert("Login success");
+
+          Router.push({
+            pathname:
+              "/election/[address]/vote",
+
+            query: {
+              address:
+                data.data
+                  .election_address,
+            },
+          });
+
+        } else {
+
+          alert(
+            data.message ||
+            "Login failed"
+          );
+        }
+
+      } catch (err) {
+
+        console.log(err);
+
+        alert("Signin failed");
+
+      } finally {
+
+        this.setState({
+          loading: false,
+        });
       }
-
-      const response = await fetch("/api/voter/authenticate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: `email=${encodeURIComponent(
-          email
-        )}&password=${encodeURIComponent(password)}`,
-      });
-
-      const data = await response.json();
-
-      console.log("LOGIN RESPONSE:", data);
-
-      if (data.status === "success") {
-        Cookies.set("voter_email", email, {
-          expires: 7,
-          path: "/",
-        });
-
-        Cookies.set("address", data.data.election_address, {
-          expires: 7,
-          path: "/",
-        });
-
-        Router.push({
-          pathname: "/election/[address]/vote",
-          query: {
-            address: data.data.election_address,
-          },
-        });
-      } else {
-        alert(data.message || "Login failed");
-      }
-    } catch (err) {
-      console.log(err);
-      alert("Signin failed");
-    } finally {
-      this.setState({ loading: false });
-    }
-  };
+    };
 
   render() {
     return (
@@ -160,6 +233,14 @@ class LoginForm extends Component {
                   iconPosition="left"
                   placeholder="Password"
                   type="password"
+                />
+
+                <Form.Input
+                  id="signin_election"
+                  fluid
+                  icon="address card"
+                  iconPosition="left"
+                  placeholder="Election Address"
                 />
 
                 <Button

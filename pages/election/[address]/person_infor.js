@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import Router from "next/router";
 import Cookies from "js-cookie";
 
 import {
@@ -8,10 +9,20 @@ import {
   Button,
 } from "semantic-ui-react";
 
+import web3 from "/Ethereum/web3";
+
+import Election_Factory
+from "/Ethereum/election_factory";
+
 class PersonInfor extends Component {
 
   state = {
+
+    role: "",
+
     company_email: "",
+    voter_email: "",
+
     election_address: "",
 
     old_password: "",
@@ -22,9 +33,25 @@ class PersonInfor extends Component {
 
   componentDidMount() {
 
+    const company_email =
+      Cookies.get("company_email");
+
+    const voter_email =
+      Cookies.get("voter_email");
+
     this.setState({
-      company_email: Cookies.get("company_email"),
-      election_address: Cookies.get("address"),
+
+      company_email,
+
+      voter_email,
+
+      election_address:
+        Cookies.get("address"),
+
+      role:
+        company_email
+          ? "company"
+          : "voter",
     });
   }
 
@@ -36,39 +63,105 @@ class PersonInfor extends Component {
 
     try {
 
-      const response = await fetch(
-        "/api/person/change_password",
-        {
-          method: "POST",
+      const {
+        role,
+        company_email,
+        voter_email,
+        election_address,
+        old_password,
+        new_password,
+      } = this.state;
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+      // =====================
+      // COMPANY
+      // =====================
 
-          body: JSON.stringify({
-            email:
-              this.state.company_email,
+      if (role === "company") {
 
-            old_password:
-              this.state.old_password,
+        await window.ethereum.request({
+          method: "eth_requestAccounts",
+        });
 
-            new_password:
-              this.state.new_password,
-          }),
-        }
-      );
+        const accounts =
+          await web3.eth.getAccounts();
 
-      const data =
-        await response.json();
+        await Election_Factory.methods
+          .updatePassword(
+            company_email,
+            old_password,
+            new_password
+          )
+          .send({
+            from: accounts[0],
+          });
 
-      alert(data.message);
+        alert(
+          "Company password updated"
+        );
+      }
+
+      // =====================
+      // VOTER
+      // =====================
+
+      else {
+
+        const response = await fetch(
+          "/api/voter/change_password",
+          {
+            method: "PUT",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              email: voter_email,
+
+              oldPassword:
+                old_password,
+
+              newPassword:
+                new_password,
+
+              election_address,
+            }),
+          }
+        );
+
+        const data =
+          await response.json();
+
+        alert(data.message);
+      }
+
+      this.setState({
+        old_password: "",
+        new_password: "",
+      });
 
     } catch (err) {
 
       console.log(err);
 
-      alert("Change password failed");
+      if (
+        err.message?.includes(
+          "Wrong old password"
+        )
+      ) {
+
+        alert(
+          "Wrong old password"
+        );
+
+      } else {
+
+        alert(
+          err.message ||
+          "Change password failed"
+        );
+      }
     }
 
     this.setState({
@@ -78,8 +171,18 @@ class PersonInfor extends Component {
 
   render() {
 
+    const {
+      role,
+      company_email,
+      voter_email,
+      election_address,
+    } = this.state;
+
     return (
-      <div style={{ padding: "30px" }}>
+
+      <div style={{
+        padding: "30px",
+      }}>
 
         <Header as="h2">
           Person Information
@@ -90,19 +193,37 @@ class PersonInfor extends Component {
           <Card.Content>
 
             <Card.Header>
-              Company Account
+
+              {
+                role === "company"
+                  ? "Company Account"
+                  : "Voter Account"
+              }
+
             </Card.Header>
 
             <Card.Description>
 
               <p>
+
                 <strong>Email:</strong>{" "}
-                {this.state.company_email}
+
+                {
+                  role === "company"
+                    ? company_email
+                    : voter_email
+                }
+
               </p>
 
               <p>
-                <strong>Election Address:</strong>{" "}
-                {this.state.election_address}
+
+                <strong>
+                  Election Address:
+                </strong>{" "}
+
+                {election_address}
+
               </p>
 
             </Card.Description>
@@ -129,6 +250,9 @@ class PersonInfor extends Component {
                 type="password"
                 label="Old Password"
                 placeholder="Enter old password"
+                value={
+                  this.state.old_password
+                }
                 onChange={(event) =>
                   this.setState({
                     old_password:
@@ -141,6 +265,9 @@ class PersonInfor extends Component {
                 type="password"
                 label="New Password"
                 placeholder="Enter new password"
+                value={
+                  this.state.new_password
+                }
                 onChange={(event) =>
                   this.setState({
                     new_password:
@@ -151,11 +278,21 @@ class PersonInfor extends Component {
 
               <Button
                 primary
-                loading={this.state.loading}
-                onClick={this.changePassword}
+                loading={
+                  this.state.loading
+                }
+                onClick={
+                  this.changePassword
+                }
               >
                 Change Password
               </Button>
+            <Button
+              style={{ marginLeft: "10px" }}
+              onClick={() => Router.back()}
+            >
+              Back
+            </Button>
 
             </Form>
 

@@ -301,6 +301,19 @@ class ContainerExampleContainer extends Component {
 											Voter List
 										</Menu.Item>
 									</Link>
+									<Link
+										href={{
+											pathname: "/election/[address]/person_infor",
+											query: { address: Cookies.get("address") },
+										}}
+										>
+										<a>
+											<Menu.Item as="a" style={{ color: "grey" }}>
+											<Icon name="id card" />
+											Person Information
+											</Menu.Item>
+										</a>
+									</Link>
 
 									<Button
 										onClick={this.signOut}

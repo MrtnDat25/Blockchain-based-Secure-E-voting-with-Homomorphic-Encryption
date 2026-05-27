@@ -1,102 +1,116 @@
 import dbConnect from "../../../config/database";
-import VoterModel from "../../../models/voter";
-import nodemailer from "nodemailer";
 
-export default async function handler(req, res) {
+import VoterModel from "../../../models/voter";
+
+import ElectionVoterModel from "../../../models/electionVoter";
+
+import bcrypt from "bcryptjs";
+
+export default async function handler(
+  req,
+  res
+) {
+
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      status: "error",
+      message: "Method not allowed",
+    });
+  }
 
   try {
 
-    console.log("API REGISTER HIT");
-
     await dbConnect();
 
-    console.log("DB CONNECTED");
-
-    if (req.method !== "POST") {
-      return res.status(405).json({
-        message: "Method not allowed",
-      });
-    }
-
-    console.log("BODY:", req.body);
-
-    const {
+    let {
       email,
       election_address,
-      election_name,
-      election_description,
     } = req.body;
 
-    if (!email || !election_address) {
+    email = email
+      ?.trim()
+      .toLowerCase();
+
+    if (
+      !email ||
+      !election_address
+    ) {
       return res.status(400).json({
         status: "error",
         message: "Missing fields",
       });
     }
 
-    const existing = await VoterModel.findOne({
-      email,
-      election_address,
-    });
+    // =====================
+    // CHECK VOTER EXIST
+    // =====================
 
-    console.log("CHECK EXIST DONE");
+    let voter =
+      await VoterModel.findOne({
+        email,
+      });
 
-    if (existing) {
+    // =====================
+    // CREATE ACCOUNT
+    // =====================
+
+    if (!voter) {
+
+      const hashedPassword =
+        await bcrypt.hash(
+          email,
+          10
+        );
+
+      voter =
+        await VoterModel.create({
+          email,
+          password:
+            hashedPassword,
+        });
+    }
+
+    // =====================
+    // CHECK MAPPING
+    // =====================
+
+    const existingMapping =
+      await ElectionVoterModel.findOne({
+        email,
+        election_address,
+      });
+
+    if (existingMapping) {
+
       return res.status(400).json({
         status: "error",
-        message: "Voter already exists",
+        message:
+          "Voter already exists in this election",
       });
     }
 
-    const password = email;
+    // =====================
+    // CREATE MAPPING
+    // =====================
 
-    const voter = await VoterModel.create({
+    await ElectionVoterModel.create({
       email,
-      password,
       election_address,
     });
 
-    console.log("VOTER CREATED");
-
-    // TEMP: TẮT EMAIL ĐỂ TEST
-    /*
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.PASSWORD,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL,
-      to: email,
-      subject: election_name,
-      html: `
-        ${election_description}<br/>
-        Your ID: ${email}<br/>
-        Password: ${password}
-      `,
-    });
-    */
-
-    console.log("EMAIL SENT");
-
     return res.status(200).json({
       status: "success",
-      message: "Voter registered successfully",
-      data: voter,
+      message:
+        "Voter added successfully",
     });
 
   } catch (err) {
 
-    console.log("REGISTER ERROR:");
     console.log(err);
 
     return res.status(500).json({
       status: "error",
       message: err.message,
-      stack: err.stack,
     });
   }
 }

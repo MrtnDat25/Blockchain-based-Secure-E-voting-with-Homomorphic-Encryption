@@ -6,6 +6,8 @@ import Election from '../../../Ethereum/election';
 import Cookies from 'js-cookie';
 import Router from 'next/router';
 import Head  from 'next/head';
+import Link from 'next/link';
+
 
 class VotingList extends Component {
 
@@ -34,6 +36,19 @@ class VotingList extends Component {
             Dashboard
             </Menu.Item>
           <hr/>
+          <Link
+            href={{
+              pathname: "/election/[address]/person_infor",
+              query: { address: Cookies.get("address") },
+            }}
+          >
+            <a>
+              <Menu.Item as="a" style={{ color: "grey" }}>
+                <Icon name="id card" />
+                Person Information
+              </Menu.Item>
+            </a>
+          </Link>
           <Button onClick={this.signOut} style={{backgroundColor: 'white'}}>
           <Menu.Item as='a' style={{ color: 'grey' }}>
             <Icon name='sign out' />

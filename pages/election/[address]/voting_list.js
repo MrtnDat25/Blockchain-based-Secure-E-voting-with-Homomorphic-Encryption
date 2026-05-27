@@ -72,7 +72,8 @@ loadVoters = async () => {
 
     const data = await res.json();
 
-    let voters = data?.data?.voters || [];
+    const voters =
+      data?.data?.voters || [];
 
     const items = voters.map((voter) => {
 
@@ -85,7 +86,9 @@ loadVoters = async () => {
             <Button
               negative
               basic
-              onClick={() => this.deleteEmail(voter.id)}
+              onClick={() =>
+              this.deleteEmail(voter._id)
+            }
             >
               Delete
             </Button>
@@ -131,7 +134,7 @@ loadVoters = async () => {
  deleteEmail = async (id) => {
   try {
 
-    const response = await fetch(`/api/voter/${id}`, {
+    const response = await fetch(`/api/electionVoter/${id}`, {
       method: "DELETE",
     });
 
@@ -203,6 +206,20 @@ loadVoters = async () => {
           </Menu.Item>
           </a>
           </Link>
+
+          <Link
+            href={{
+              pathname: "/election/[address]/person_infor",
+              query: { address: Cookies.get("address") },
+            }}
+          >
+            <a>
+              <Menu.Item as="a" style={{ color: "grey" }}>
+                <Icon name="id card" />
+                Person Information
+              </Menu.Item>
+            </a>
+          </Link>
           <hr/>
           <Button onClick={this.signOut} style={{backgroundColor: 'white'}}>
           <Menu.Item as='a' style={{ color: 'grey' }}>
@@ -222,155 +239,76 @@ loadVoters = async () => {
       };
 
       register = async (event) => {
-        event.preventDefault();
-        this.setState({ loading: true });
 
-        try {
-          const email = document
-            .getElementById("register_voter_email")
-            ?.value?.trim();
+  event.preventDefault();
 
-          const add = this.state.election_address;
-
-          if (!email || !add) {
-            alert("Missing email or election address");
-            return;
-          }
-
-          const body = new URLSearchParams({
-            email,
-            election_address: add,
-            election_name: this.state.election_name,
-            election_description: this.state.election_description,
-          });
-
-          const response = await fetch("/api/voter/register", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: body.toString(),
-          });
-
-          const data = await response.json();
-
-          if (response.ok && data.status === "success") {
-            alert(data.message);
-            this.loadVoters(); // reload list
-          } else {
-            alert(data.message || "Register failed");
-          }
-        } catch (err) {
-          console.error(err);
-          alert(err.message);
-          // alert("Error register");
-        } finally {
-          this.setState({ loading: false });
-        }
-      };
-
-      handleExcelUpload = async (event) => {
-
-        const file = event.target.files[0];
-
-        if (!file) return;
-
-        this.setState({ excelLoading: true });
-
-        try {
-
-          const data = await file.arrayBuffer();
-
-          const workbook = XLSX.read(data);
-
-          const sheetName = workbook.SheetNames[0];
-
-          const worksheet = workbook.Sheets[sheetName];
-
-          const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-          console.log(jsonData);
-
-          for (const row of jsonData) {
-
-            const email = row.email || row.Email || row.EMAIL;
-
-            if (!email) continue;
-
-            const body = new URLSearchParams({
-              email: email,
-              election_address: this.state.election_address,
-              election_name: this.state.election_name,
-              election_description: this.state.election_description,
-            });
-
-            const response = await fetch("/api/voter/register", {
-              method: "POST",
-              headers: {
-                "Content-Type":
-                  "application/x-www-form-urlencoded",
-              },
-              body: body.toString(),
-            });
-
-            const result = await response.json();
-
-            console.log(result);
-          }
-
-          alert("Import voters successfully!");
-
-          this.loadVoters();
-
-        } catch (err) {
-
-          console.log(err);
-
-          alert("Excel import failed");
-
-        }
-
-        this.setState({ excelLoading: false });
-      };
-
-
-      handleExcelImport = async (event) => {
-
-  const file = event.target.files[0];
-
-  if (!file) return;
-
-  const formData = new FormData();
-
-  formData.append("file", file);
-
-  formData.append(
-    "election_address",
-    this.state.election_address
-  );
+  this.setState({
+    loading: true,
+  });
 
   try {
 
-    this.setState({
-      loading: true,
-    });
+    const email =
+      document
+        .getElementById(
+          "register_voter_email"
+        )
+        ?.value
+        ?.trim()
+        ?.toLowerCase();
 
-    const response = await axios.post(
-      "/api/voter/import",
-      formData
+    if (!email) {
+
+      alert("Missing email");
+
+      return;
+    }
+
+    const response = await fetch(
+      "/api/voter/register",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body: JSON.stringify({
+          email,
+
+          election_address:
+            this.state
+              .election_address,
+        }),
+      }
     );
 
-    alert(
-      `Imported ${response.data.inserted} voters`
-    );
+    const data =
+      await response.json();
 
-    this.loadVoters();
+    if (
+      response.ok &&
+      data.status === "success"
+    ) {
+
+      alert(data.message);
+
+      this.loadVoters();
+
+    } else {
+
+      alert(
+        data.message ||
+        "Register failed"
+      );
+    }
 
   } catch (err) {
 
     console.log(err);
 
-    alert("Import failed");
+    alert("Register failed");
 
   }
 
@@ -378,6 +316,64 @@ loadVoters = async () => {
     loading: false,
   });
 };
+
+      handleExcelImport = async (
+          event
+        ) => {
+
+          const file =
+            event.target.files[0];
+
+          if (!file) return;
+
+          const formData =
+            new FormData();
+
+          formData.append(
+            "file",
+            file
+          );
+
+          formData.append(
+            "election_address",
+            this.state
+              .election_address
+          );
+
+          try {
+
+            this.setState({
+              loading: true,
+            });
+
+            const response =
+              await axios.post(
+                "/api/voter/import",
+                formData
+              );
+
+            alert(
+              `Imported ${response.data.inserted} voters`
+            );
+
+            this.loadVoters();
+
+          } catch (err) {
+
+            console.log(err);
+
+            alert(
+              err?.response?.data
+                ?.message ||
+              "Import failed"
+            );
+
+          }
+
+          this.setState({
+            loading: false,
+          });
+        };
 
 	
   render() {      
